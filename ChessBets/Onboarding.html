@@ -1,0 +1,507 @@
+{{ extends "global/Page.html" }}
+{{ block title }}Experiment Onboarding{{ endblock }}
+
+{{ block content }}
+<style>
+    .step-content { display: none; }
+    .step-active { display: block; }
+    .elo-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .elo-table th, .elo-table td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+    .elo-table th { background-color: #f8f9fa; }
+    .error-field { border: 2px solid #dc3545 !important; background-color: #f8d7da !important; }
+    .error-msg { color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold; display: none; }
+    .demo-box { border: 2px dashed #007bff; padding: 15px; border-radius: 8px; background-color: #f8f9fa; }
+    .hl-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+    .hl-table th, .hl-table td { border: 1px solid #dee2e6; padding: 5px; text-align: center; }
+    .selected-white { background-color: #ffffff; font-weight: bold; border: 2px solid #8c7e6c; color: #5d5037; }
+    .selected-black { background-color: #e9ecef; font-weight: bold; border: 2px solid #343a40; }
+    
+    .extra-info-panel {
+        display: none;
+        background-color: #f1f3f5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        border-left: 6px solid #007bff;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    }
+    .info-btn { color: #007bff; text-decoration: underline; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+    .info-btn:hover { color: #0056b3; }
+    .example-box { background-color: #fff; border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    code { background-color: #eee; padding: 2px 4px; border-radius: 3px; font-weight: bold; }
+</style>
+
+<!-- STEP 1: WELCOME -->
+<div id="step-1" class="step-content step-active">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white"><h4>Step 1: Welcome & Incentives</h4></div>
+        <div class="card-body">
+            <p>Welcome to the Chess Betting Experiment! You will be making choices based on historical World Chess Championship matches.</p>
+            <p>Your earnings are measured in <b>Points</b>. Every Point you earn will be converted into one <b>lottery ticket</b> for a final cash prize drawing at the end of the study.</p>
+            
+            <p class="info-btn" onclick="toggleInfo('points')">How do points turn into money? (Get more info)</p>
+            <div id="info-points" class="extra-info-panel">
+                <h5>The Lottery System: Points as Tickets</h5>
+                <p>This experiment uses a performance-based incentive. Instead of a fixed payment, your payout depends on the number of points you earn. Think of every Point as one physical lottery ticket with your name on it.</p>
+                <ul>
+                    <li>If you earn <b>4000 Points</b>, you have a much higher probability of being drawn for the prize than if you earn <b>200 Points</b>.</li>
+                </ul>
+                <p><b>Important:</b> At the very end of the experiment, the computer will pick <b>one real round</b> at random. From that round, it will pick <b>one of your 10 decisions</b> at random. This specific choice determines your final ticket count. You should treat every Game Number as the only one that counts!</p>
+            </div>
+            
+            <p>The experiment consists of:</p>
+            <ul>
+                <li><b>This Onboarding:</b> Instructions and verification quizzes.</li>
+                <li><b>1 Practice Round:</b> To get used to the interface (no tickets earned).</li>
+                <li><b>11 Real Rounds:</b> Where you earn points based on historical outcomes.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end"><button type="button" class="btn btn-primary btn-lg" onclick="nextStep(2)">Next: Understanding Elo</button></div>
+</div>
+
+<!-- STEP 2: ELO -->
+<div id="step-2" class="step-content">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white"><h4>Step 2: Understanding Elo Ratings</h4></div>
+        <div class="card-body">
+            <p>In every round, we show you the <b>Elo Ratings</b> of two players. Elo is a standard measure of skill in chess.</p>
+            <div class="alert alert-info"><b>Basic Rule:</b> A higher Elo player is more likely to win than a lower Elo player.</div>
+            
+            <p class="info-btn" onclick="toggleInfo('elo')">How does the Elo math work? (Get more info)</p>
+            <div id="info-elo" class="extra-info-panel">
+                <h5>The Statistical Logic of Elo</h5>
+                <p>The Elo system calculates the expected score of a player based on their rating relative to their opponent. A difference of 100 points means the higher-rated player has a 64% win probability.</p>
+                <p><b>Note on Draws:</b> Our "Black / Tie" option is a <b>collective outcome</b>. You win points if the Black player wins <b>OR</b> if the game is a draw. This is why the win probability for "Black / Tie" is always 100% minus the White player's win probability.</p>
+                <table class="elo-table">
+                    <thead><tr><th>Elo Gap (W minus B)</th><th>White Win Chance</th><th>White LOSE (Black/Tie) Chance</th></tr></thead>
+                    <tbody>
+                        {{ for m in elo_mapping }}
+                        <tr><td>{{ m.diff }} pts</td><td><b>{{ m.white_win }}</b></td><td>{{ m.white_lose }}</td></tr>
+                        {{ endfor }}
+                    </tbody>
+                </table>
+            </div>
+
+            <hr>
+            <h5>Onboarding Quiz (Part A):</h5>
+            <div class="form-group mb-3">
+                <label><b>Example Matchup:</b> White (Elo 2800) vs Black (Elo 2700). White has 100 points more. What is White's approximate win chance?</label>
+                <select id="quiz_elo_win" class="form-control"><option value="">-- Select Answer --</option><option value="1">36%</option><option value="2">50%</option><option value="3">64%</option></select>
+                <div class="error-msg" id="err_elo_win">Incorrect: A +100 point gap corresponds to a 64% win probability.</div>
+            </div>
+            <div class="form-group">
+                <label>In the same matchup, what is the chance that White LOSES (meaning Black wins or there is a Tie)?</label>
+                <select id="quiz_elo_lose" class="form-control"><option value="">-- Select Answer --</option><option value="1">36%</option><option value="2">50%</option><option value="3">64%</option></select>
+                <div class="error-msg" id="err_elo_lose">Incorrect: If White wins 64% of the time, they lose (or tie) the remaining 36% of the time.</div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="nextStep(1)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="validateElo()">Verify and Continue</button>
+    </div>
+</div>
+
+<!-- STEP 3: PAYOUTS -->
+<div id="step-3" class="step-content">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white"><h4>Step 3: Understanding {{ if is_ML }}Moneyline{{ else }}Decimal{{ endif }} Payouts</h4></div>
+        <div class="card-body">
+            <p>You start every round with an <b>Endowment of 200 Points</b>. Your total Points are calculated based on your bet and the odds.</p>
+            
+            <p class="info-btn" onclick="toggleInfo('odds')">Show detailed payout formula (Get more info)</p>
+            <div id="info-odds" class="extra-info-panel">
+                {{ if is_ML }}
+                    <h5>Moneyline Math: Profit + Stake</h5>
+                    <p>The Moneyline format focus on how much <b>profit</b> you earn relative to a base of 100 Points.</p>
+                    <div class="example-box">
+                        <b>1. Positive Odds (+): Betting on the Underdog</b>
+                        <br>Formula: <code>(Bet / 100) * Odds + Bet</code>
+                        <br>Example: +300 odds. You bet 200 Points. Profit = (200 / 100) * 300 = 600. Total = 600 profit + 200 stake = <b>800 Points.</b>
+                    </div>
+                    <div class="example-box">
+                        <b>2. Negative Odds (-): Betting on the Favorite</b>
+                        <br>Formula: <code>(Bet / |Odds|) * 100 + Bet</code>
+                        <br>Example: -400 odds. You bet 200 Points. Profit = (200 / 400) * 100 = 50. Total = 50 profit + 200 stake = <b>250 Points.</b>
+                    </div>
+                {{ else }}
+                    <h5>Decimal Math: Odds × Stake</h5>
+                    <p>The Decimal format represents the <b>total return</b> (your stake plus your profit) for every 1 Point you bet.</p>
+                    <div class="example-box">
+                        Formula: <code>Bet * Odds</code>
+                        <br>Example 1: Odds are 4.0. You bet 200 Points. Calculation: 200 * 4.0 = <b>800 Points.</b>
+                    </div>
+                    <div class="example-box">
+                        Example 2: Odds are 1.5. You bet 200 Points. Calculation: 200 * 1.5 = <b>300 Points.</b>
+                    </div>
+                {{ endif }}
+            </div>
+
+            <hr>
+            <h5>Onboarding Quiz (Part B):</h5>
+            <div class="form-group mb-3">
+                <label>If the payout is <b>{{ if is_ML }}+300{{ else }}4.0{{ endif }}</b> and you bet your endowment of <b>200 Points</b>, how many total Points do you receive if you win?</label>
+                <input type="number" id="quiz_odds_a" class="form-control" placeholder="Enter total points...">
+                <div class="error-msg" id="err_odds_a">
+                    {{ if is_ML }}
+                        Incorrect: On a 200 point bet, +300 means you win 600 profit + 200 stake = 800 Points.
+                    {{ else }}
+                        Incorrect: 200 point bet × 4.0 odds = 800 Points.
+                    {{ endif }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>If the payout is <b>{{ if is_ML }}-200{{ else }}1.5{{ endif }}</b> and you bet your endowment of <b>200 Points</b>, how many total Points do you receive if you win?</label>
+                <input type="number" id="quiz_odds_b" class="form-control" placeholder="Enter total points...">
+                <div class="error-msg" id="err_odds_b">
+                    {{ if is_ML }}
+                        Incorrect: On a 200 point bet, -200 means you win 100 profit + 200 stake = 300 Points.
+                    {{ else }}
+                        Incorrect: 200 point bet × 1.5 odds = 300 Points.
+                    {{ endif }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="nextStep(2)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="validateOdds()">Verify and Continue</button>
+    </div>
+</div>
+
+<!-- STEP 4: TUTORIAL -->
+<div id="step-4" class="step-content">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white"><h4>Step 4: The Switching Table</h4></div>
+        <div class="card-body">
+            <p>For each matchup, you will see 10 different <b>Game Numbers</b> with payout options. Instead of choosing 10 times, you simply click your <b>Switching Point</b>.</p>
+            
+            <p class="info-btn" onclick="toggleInfo('switch')">Why do we use this table? (Get more info)</p>
+            <div id="info-switch" class="extra-info-panel">
+                <h5>Value vs. Risk</h5>
+                <p>As you move through the Game Numbers, the payouts change. 
+                {{ if white_best_on_top }}
+                    Betting on <b>White</b> becomes more profitable, while betting on <b>Black / Tie</b> becomes less so.
+                {{ else }}
+                    Betting on <b>Black / Tie</b> becomes more profitable, while betting on <b>White</b> becomes less so.
+                {{ endif }}
+                Clicking a cell tells us that from that point forward, you prefer that side's payout over the other.</p>
+            </div>
+
+            <p><b>Try it now:</b> Click any cell to set your switch. Above your click is Black, below is White.</p>
+            <div class="demo-box mt-3">
+                <table class="hl-table" id="demo-table">
+                    <thead><tr><th>Game Number</th><th>Bet White</th><th>Bet Black</th></tr></thead>
+                    <tbody>
+                        {{ for r in rows }}
+                        <tr id="demo-row-{{ r.index }}">
+                            <td>{{ r.index }}</td>
+                            <td class="white-cell" onclick="demoSwitch({{ r.index }}, true)">{{ r.val_w }}</td>
+                            <td class="black-cell" onclick="demoSwitch({{ r.index }}, false)">{{ r.val_b }}</td>
+                        </tr>
+                        {{ endfor }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="nextStep(3)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(5)">I understand</button>
+    </div>
+</div>
+
+<!-- STEP 5: SIMULATION -->
+<div id="step-5" class="step-content">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white"><h4>Final Step: Verification Simulation</h4></div>
+        <div class="card-body">
+            <p>Imagine you switched to <b>White at Game Number 4</b> and <b>White WINS</b>.</p>
+            <table class="hl-table mb-3">
+                <thead><tr><th>Game Number</th><th>Bet White</th><th>Bet Black / Tie</th></tr></thead>
+                <tbody>
+                    {{ for r in rows }}
+                    <tr>
+                        <td>{{ r.index }}</td>
+                        <td class="{{ if r.index >= 4 }}selected-white{{ endif }}">{{ r.val_w }}</td>
+                        <td class="{{ if r.index < 4 }}selected-black{{ endif }}">{{ r.val_b }}</td>
+                    </tr>
+                    {{ endfor }}
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                <h5>Understanding Table Value</h5>
+                <p>
+                    {{ if white_best_on_top }}
+                        The table is oriented so the <b>best payouts for White</b> (highest points) are at the <b>top</b>. Moving down, White becomes less profitable.
+                    {{ else }}
+                        The table is oriented so the <b>best payouts for White</b> (highest points) are at the <b>bottom</b>. Moving down, White becomes more profitable.
+                    {{ endif }}
+                </p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Which Game Number is <b>better</b> to bet on White: 1 or 2?</label>
+                        <select id="quiz_sim_better1" class="form-control"><option value="">--</option><option value="1">Game 1</option><option value="2">Game 2</option></select>
+                        <div class="error-msg" id="err_sim_better1">
+                            {{ if white_best_on_top }}
+                                Incorrect: The table is built such that as we go down the games, it is <b>worse</b> to bet on White. Game 1 has the better payout.
+                            {{ else }}
+                                Incorrect: The table is built such that as we go down the games, it is <b>better</b> to bet on White. Game 2 has the better payout.
+                            {{ endif }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label>Which Game Number is <b>better</b> to bet on White: 2 or 10?</label>
+                        <select id="quiz_sim_better2" class="form-control"><option value="">--</option><option value="2">Game 2</option><option value="10">Game 10</option></select>
+                        <div class="error-msg" id="err_sim_better2">
+                            {{ if white_best_on_top }}
+                                Incorrect: The table is built such that as we go down the games, it is <b>worse</b> to bet on White. Game 2 has the better payout.
+                            {{ else }}
+                                Incorrect: The table is built such that as we go down the games, it is <b>better</b> to bet on White. Game 10 has the better payout.
+                            {{ endif }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+            <h5>Onboarding Quiz (Part C):</h5>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label><b>Game Number 1:</b> Assume White won. Based on your switch at Game 4, how many Points would your bet on Game 1 give you?</label>
+                        <input type="number" id="quiz_sim_1" class="form-control">
+                        <div class="error-msg" id="err_sim_1">Incorrect: Since you switched to White at Game 4, in Game 1 you were betting on Black / Tie. Because White won, your bet on Black / Tie resulted in 0 Points.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label><b>Game Number 4:</b> Assume White won. Based on your switch at Game 4, how many Points would your bet on Game 4 give you?</label>
+                        <input type="number" id="quiz_sim_4" class="form-control">
+                        <div class="error-msg" id="err_sim_4">
+                            {{ if is_ML }}
+                                Incorrect. <b>Moneyline Logic:</b> Look at Game 4 in the table. 
+                                Profit = <code>(200 / |Odds|) * 100</code> (if negative favorite) or <code>(200 / 100) * Odds</code> (if positive underdog).
+                                Then add your 200 Points stake back. The correct total for Game 4 is <b>{{ ans_sim_4 }} Points.</b>
+                            {{ else }}
+                                Incorrect. <b>Decimal Logic:</b> Total Points = <code>Bet (200) * Odds</code>. 
+                                Based on Game 4, the answer is <b>{{ ans_sim_4 }} Points.</b>
+                            {{ endif }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label><b>Game Number 5:</b> Assume White won. Based on your switch at Game 4, how many Points would your bet on Game 5 give you?</label>
+                        <input type="number" id="quiz_sim_5" class="form-control">
+                        <div class="error-msg" id="err_sim_5">
+                            {{ if is_ML }}
+                                Incorrect. <b>Moneyline Logic:</b> Profit = <code>(200 / |Odds|) * 100</code> (if negative favorite) or <code>(200 / 100) * Odds</code> (if positive underdog), plus 200 stake back.
+                                The correct total for Game 5 is <b>{{ ans_sim_5 }} Points.</b>
+                            {{ else }}
+                                Incorrect. <b>Decimal Logic:</b> Total Points = <code>Bet (200) * Odds</code>. 
+                                Based on Game 5, the answer is <b>{{ ans_sim_5 }} Points.</b>
+                            {{ endif }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label><b>Game Number 6:</b> Assume White won. Based on your switch at Game 4, how many Points would your bet on Game 6 give you?</label>
+                        <input type="number" id="quiz_sim_6" class="form-control">
+                        <div class="error-msg" id="err_sim_6">
+                            {{ if is_ML }}
+                                Incorrect. <b>Moneyline Logic:</b> Profit = <code>(200 / |Odds|) * 100</code> (if negative favorite) or <code>(200 / 100) * Odds</code> (if positive underdog), plus 200 stake back.
+                                The correct total for Game 6 is <b>{{ ans_sim_6 }} Points.</b>
+                            {{ else }}
+                                Incorrect. <b>Decimal Logic:</b> Total Points = <code>Bet (200) * Odds</code>. 
+                                Based on Game 6, the answer is <b>{{ ans_sim_6 }} Points.</b>
+                            {{ endif }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label><b>Game Number 10:</b> Assume White won. Based on your switch at Game 4, how many Points would your bet on Game 10 give you? <i>(Round down)</i></label>
+                <input type="number" id="quiz_sim_10" class="form-control">
+                <div class="error-msg" id="err_sim_10">
+                    {{ if is_ML }}
+                        Incorrect. 
+                        <b>Moneyline Logic:</b> Look at Game 10 in the table. 
+                        If it's a negative favorite (e.g. -400), you earn <code>(200 / |Odds|) * 100 = Profit</code> then add your 200 Points stake back. 
+                        If it's a positive underdog (e.g. +400), you earn <code>(200 / 100) * Odds = Profit</code> then add your 200 Points stake back.
+                        Rounding down to the nearest whole point, the answer is <b>{{ ans_sim_10 }} Points.</b>
+                    {{ else }}
+                        Incorrect. 
+                        <b>Decimal Logic:</b> Total Points = <code>200 Points * Odds</code>. 
+                        Rounding down, the answer is <b>{{ ans_sim_10 }} Points.</b>
+                    {{ endif }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>In this simulation, for how many of the 10 game numbers did you choose a bet that won (i.e. you bet White and White won)?</label>
+                <select id="quiz_sim_logic" class="form-control"><option value="">--</option><option value="1">3</option><option value="2">4</option><option value="3">7</option><option value="4">10</option></select>
+                <div class="error-msg" id="err_sim_logic">Incorrect: Since you switched at Game 4, games 4, 5, 6, 7, 8, 9, 10 won (Total = 7).</div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="nextStep(4)">Back</button>
+        <div>
+            {{ if debug }}
+                <button type="button" class="btn btn-outline-warning" onclick="fillCorrect()">Debug: Fill Correct</button>
+            {{ endif }}
+            <button type="button" class="btn btn-success btn-lg" onclick="finishOnboarding()">Finish & Start Practice Match</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden real form -->
+<input type="hidden" name="q_elo_win" id="id_q_elo_win">
+<input type="hidden" name="q_elo_lose" id="id_q_elo_lose">
+<input type="hidden" name="q_odds_a" id="id_q_odds_a">
+<input type="hidden" name="q_odds_b" id="id_q_odds_b">
+<input type="hidden" name="q_sim_1" id="id_q_sim_1">
+<input type="hidden" name="q_sim_4" id="id_q_sim_4">
+<input type="hidden" name="q_sim_5" id="id_q_sim_5">
+<input type="hidden" name="q_sim_6" id="id_q_sim_6">
+<input type="hidden" name="q_sim_10" id="id_q_sim_10">
+<input type="hidden" name="q_sim_logic" id="id_q_sim_logic">
+<input type="hidden" name="q_sim_better1" id="id_q_sim_better1">
+<input type="hidden" name="q_sim_better2" id="id_q_sim_better2">
+
+<!-- Tracking fields -->
+<input type="hidden" name="info_points_clicked" id="id_info_points_clicked" value="0">
+<input type="hidden" name="info_elo_clicked" id="id_info_elo_clicked" value="0">
+<input type="hidden" name="info_odds_clicked" id="id_info_odds_clicked" value="0">
+<input type="hidden" name="info_switch_clicked" id="id_info_switch_clicked" value="0">
+
+<script>
+    function toggleInfo(id) {
+        const panel = document.getElementById('info-' + id);
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+        document.getElementById('id_info_' + id + '_clicked').value = "1";
+    }
+
+    function nextStep(step) {
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('step-active'));
+        document.getElementById('step-' + step).classList.add('step-active');
+        window.scrollTo(0,0);
+    }
+
+    function highlightError(id, isError) {
+        const input = document.getElementById(id);
+        const msg = document.getElementById('err' + id.substring(4));
+        if (isError) {
+            input.classList.add('error-field');
+            msg.style.display = 'block';
+            input.onmousedown = () => { input.classList.remove('error-field'); input.value = ''; msg.style.display='none'; };
+        } else {
+            input.classList.remove('error-field');
+            msg.style.display = 'none';
+        }
+    }
+
+    function validateElo() {
+        const w = document.getElementById('quiz_elo_win').value;
+        const l = document.getElementById('quiz_elo_lose').value;
+        highlightError('quiz_elo_win', w != "3");
+        highlightError('quiz_elo_lose', l != "1");
+        if (w == "3" && l == "1") nextStep(3);
+    }
+
+    function validateOdds() {
+        const a = document.getElementById('quiz_odds_a').value;
+        const b = document.getElementById('quiz_odds_b').value;
+        highlightError('quiz_odds_a', a != "800");
+        highlightError('quiz_odds_b', b != "300");
+        if (a == "800" && b == "300") nextStep(4);
+    }
+
+    function finishOnboarding() {
+        const s1 = Math.floor(document.getElementById('quiz_sim_1').value || -1);
+        const s4 = Math.floor(document.getElementById('quiz_sim_4').value || -1);
+        const s5 = Math.floor(document.getElementById('quiz_sim_5').value || -1);
+        const s6 = Math.floor(document.getElementById('quiz_sim_6').value || -1);
+        const s10 = Math.floor(document.getElementById('quiz_sim_10').value || -1);
+        const sl = document.getElementById('quiz_sim_logic').value;
+        const b1 = document.getElementById('quiz_sim_better1').value;
+        const b2 = document.getElementById('quiz_sim_better2').value;
+        const btn = document.querySelector('button[onclick="finishOnboarding()"]');
+        
+        highlightError('quiz_sim_1', s1 != 0);
+        highlightError('quiz_sim_4', s4 != {{ ans_sim_4 }});
+        highlightError('quiz_sim_5', s5 != {{ ans_sim_5 }});
+        highlightError('quiz_sim_6', s6 != {{ ans_sim_6 }});
+        highlightError('quiz_sim_10', s10 != {{ ans_sim_10 }});
+        highlightError('quiz_sim_logic', sl != "3");
+        highlightError('quiz_sim_better1', b1 != "{{ ans_better1 }}");
+        highlightError('quiz_sim_better2', b2 != "{{ ans_better2 }}");
+        
+        if (s1==0 && s4=={{ ans_sim_4 }} && s5=={{ ans_sim_5 }} && s6=={{ ans_sim_6 }} && s10=={{ ans_sim_10 }} && sl=="3" && b1=="{{ ans_better1 }}" && b2=="{{ ans_better2 }}") {
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+            document.getElementById('id_q_elo_win').value = document.getElementById('quiz_elo_win').value;
+            document.getElementById('id_q_elo_lose').value = document.getElementById('quiz_elo_lose').value;
+            document.getElementById('id_q_odds_a').value = document.getElementById('quiz_odds_a').value;
+            document.getElementById('id_q_odds_b').value = document.getElementById('quiz_odds_b').value;
+            document.getElementById('id_q_sim_1').value = s1;
+            document.getElementById('id_q_sim_4').value = s4;
+            document.getElementById('id_q_sim_5').value = s5;
+            document.getElementById('id_q_sim_6').value = s6;
+            document.getElementById('id_q_sim_10').value = s10;
+            document.getElementById('id_q_sim_logic').value = sl;
+            document.getElementById('id_q_sim_better1').value = b1;
+            document.getElementById('id_q_sim_better2').value = b2;
+            document.querySelector('form').submit();
+        }
+    }
+
+    function fillCorrect() {
+        // Step 2
+        document.getElementById('quiz_elo_win').value = "3";
+        document.getElementById('quiz_elo_lose').value = "1";
+        // Step 3
+        document.getElementById('quiz_odds_a').value = "800";
+        document.getElementById('quiz_odds_b').value = "300";
+        // Step 5
+        document.getElementById('quiz_sim_better1').value = "{{ ans_better1 }}";
+        document.getElementById('quiz_sim_better2').value = "{{ ans_better2 }}";
+        document.getElementById('quiz_sim_1').value = "0";
+        document.getElementById('quiz_sim_4').value = "{{ ans_sim_4 }}";
+        document.getElementById('quiz_sim_5').value = "{{ ans_sim_5 }}";
+        document.getElementById('quiz_sim_6').value = "{{ ans_sim_6 }}";
+        document.getElementById('quiz_sim_10').value = "{{ ans_sim_10 }}";
+        document.getElementById('quiz_sim_logic').value = "3";
+        
+        alert("Correct answers filled for all steps!");
+    }
+
+    function demoSwitch(rowIdx, clickedWhite) {
+        let switchPoint = clickedWhite ? rowIdx : rowIdx + 1;
+        for (let i = 1; i <= 10; i++) {
+            const row = document.getElementById('demo-row-' + i);
+            const wCell = row.querySelector('.white-cell');
+            const bCell = row.querySelector('.black-cell');
+            wCell.classList.remove('selected-white'); bCell.classList.remove('selected-black');
+            row.style.borderBottom = "";
+            if (i < switchPoint) bCell.classList.add('selected-black');
+            else wCell.classList.add('selected-white');
+            if (i === switchPoint - 1) row.style.borderBottom = "4px solid #8c7e6c";
+        }
+    }
+</script>
+{{ endblock }}

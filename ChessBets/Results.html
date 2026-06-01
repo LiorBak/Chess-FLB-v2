@@ -1,0 +1,58 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    Final Points & Tickets
+{{ endblock }}
+
+{{ block content }}
+
+<style>
+    body, .otree-body {
+        background-color: #efe6d5 !important;
+    }
+    .card {
+        background-color: #efe6d5 !important;
+        border-color: #dfd0ab !important;
+    }
+    .card-body {
+        color: #5d5037 !important;
+    }
+</style>
+
+<p>
+    The experiment is now complete.
+</p>
+
+<div class="card mb-3 border-success">
+    <div class="card-header bg-success text-white">
+        <h4>Final Payment Calculation</h4>
+    </div>
+    <div class="card-body">
+        <p>
+            To determine your final payoff, the computer has randomly selected one real round: 
+            <b>Round #{{ binding_round_num }}</b>.
+        </p>
+        
+        <p>
+            Within that round, one of your 10 decisions was randomly selected as binding.
+        </p>
+
+        <div class="alert alert-success mt-4">
+            <h4 class="mb-0">Selected Payout: You earned <b>{{ final_points }}</b> Points.</h4>
+        </div>
+        
+        <p>
+            These {{ final_points }} points will be converted into {{ final_points }} lottery tickets for the final prize drawing.
+        </p>
+
+        <div class="alert alert-info mt-3">
+            <h5 class="mb-0">Overall Cumulative Score: <b>{{ cumulative_points }}</b> Points (across all 11 real rounds).</h5>
+        </div>
+    </div>
+</div>
+
+<p>
+    Thank you for your participation! You may now close this window.
+</p>
+
+{{ endblock }}

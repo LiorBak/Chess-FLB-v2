@@ -1,0 +1,817 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    Round {{ player.round_number }} of 12: Adjust Your Bet Size
+{{ endblock }}
+
+{{ block content }}
+<style>
+    body, .otree-body {
+        background-color: #efe6d5 !important; /* Premium soft light brown */
+    }
+
+    .bet-container {
+        max-width: 960px;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Elo Comparison Widget */
+    .elo-comparison-card {
+        background: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(93, 80, 55, 0.05);
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .elo-comparison-card:hover {
+        background-color: #e5dcce !important;
+    }
+    .elo-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    .elo-player-info {
+        width: 40%;
+    }
+    .elo-player-info.left {
+        text-align: center;
+    }
+    .elo-player-info.right {
+        text-align: center;
+    }
+    .elo-player-label {
+        font-size: 0.85em;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #8c7e6c;
+        letter-spacing: 0.5px;
+    }
+    .elo-player-value {
+        font-size: 1.8em;
+        font-weight: 800;
+        color: #5d5037;
+        margin-top: 2px;
+    }
+    .elo-diff-badge-container {
+        text-align: center;
+        width: 100%;
+    }
+    .elo-diff-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.95em;
+        box-shadow: 0 2px 5px rgba(93, 80, 55, 0.05);
+    }
+    .elo-diff-badge.white-advantage {
+        background-color: #fdf5e6;
+        color: #8d6e63;
+        border: 1px solid #d8b28a;
+    }
+    .elo-diff-badge.black-advantage {
+        background-color: #e5dcce;
+        color: #212529;
+        border: 1px solid #8c7e6c;
+    }
+    .elo-diff-badge.equal-rating {
+        background-color: #f1ebd8;
+        color: #5d5037;
+        border: 1px solid #dfd0ab;
+    }
+    .elo-bars-wrapper {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        height: 140px;
+        margin: 10px auto 0;
+        width: 100%;
+        max-width: 120px;
+        border-bottom: 2px solid #dfd0ab;
+        padding-bottom: 5px;
+        position: relative;
+    }
+    .elo-vbar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80px;
+        height: 100%;
+        justify-content: flex-end;
+        position: relative;
+    }
+    .elo-vbar {
+        width: 100%;
+        border-radius: 6px 6px 0 0;
+        box-shadow: 0 4px 6px rgba(93, 80, 55, 0.05);
+        position: relative;
+    }
+    .elo-bar-value-inside {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: 850;
+        font-size: 0.88em;
+        letter-spacing: 0.5px;
+    }
+    .elo-vbar-white {
+        background: linear-gradient(180deg, #d8b28a, #fbf7f3);
+        border: 1px solid #d8b28a;
+        border-bottom: none;
+    }
+    .elo-vbar-white .elo-bar-value-inside {
+        color: #5d4037 !important;
+    }
+    .elo-vbar-black {
+        background: linear-gradient(180deg, #212529, #777777);
+        border: 1px solid #212529;
+        border-bottom: none;
+    }
+    .elo-vbar-black .elo-bar-value-inside {
+        color: #ffffff !important;
+    }
+    .elo-vbar-label {
+        font-size: 0.8em;
+        font-weight: bold;
+        color: #5d5037;
+        letter-spacing: 0.5px;
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+
+    /* Choice / Sizing panels */
+    .card-panel {
+        background-color: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(93, 80, 55, 0.05);
+        color: #5d5037 !important;
+    }
+
+    /* Choice buttons */
+    .choice-btn {
+        display: block;
+        padding: 16px 12px;
+        border-radius: 8px;
+        border: 1px solid #dfd0ab;
+        background-color: #efe6d5;
+        color: #5d5037;
+        font-weight: bold;
+        font-size: 1.05em;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(93, 80, 55, 0.02);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .choice-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(93, 80, 55, 0.08);
+        border-color: #c8bda9;
+        background-color: #e5dcce;
+    }
+    .selected-white {
+        background-color: #ffffff !important;
+        color: #5d5037 !important;
+        border-color: #8c7e6c !important;
+        box-shadow: 0 4px 10px rgba(140, 126, 108, 0.2), inset 0 0 0 2px #8c7e6c !important;
+    }
+    .selected-black {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #212529 !important;
+        box-shadow: 0 4px 10px rgba(33, 37, 41, 0.3) !important;
+    }
+
+    /* Rotated horizontal range slider for custom styling */
+    .slider-rotated-container {
+        width: 44px;
+        height: 220px;
+        position: relative;
+    }
+    input[type=range].vertical-slider-rotated {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 220px; /* Bounding height */
+        height: 40px; /* Bounding width (X2.5 wider track) */
+        background: #ffffff; /* Unfilled track is white */
+        border: 2.5px solid #dfd0ab;
+        border-radius: 20px;
+        outline: none;
+        cursor: pointer;
+        position: absolute;
+        top: 90px; /* Center alignment math: (220 - 40)/2 */
+        left: -88px; /* Center alignment math: (44 - 220)/2 */
+        transform: rotate(270deg); /* Rotate to stand vertically, 0 at bottom, 500 at top */
+        transform-origin: center;
+        margin: 0;
+    }
+    input[type=range].vertical-slider-rotated::-webkit-slider-runnable-track {
+        -webkit-appearance: none;
+        background: transparent;
+        height: 40px;
+        border-radius: 20px;
+    }
+    input[type=range].vertical-slider-rotated::-moz-range-track {
+        background: transparent;
+        height: 40px;
+        border-radius: 20px;
+    }
+    input[type=range].vertical-slider-rotated::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #3e2723 !important; /* Dark brown dot */
+        border: 3px solid #ffffff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+        margin-top: -2px; /* Centering offset for 44px thumb inside 40px track */
+    }
+    input[type=range].vertical-slider-rotated::-webkit-slider-thumb:hover {
+        background: #27120f !important;
+        transform: scale(1.05);
+    }
+    input[type=range].vertical-slider-rotated::-moz-range-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #3e2723 !important;
+        border: 3px solid #ffffff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+    }
+    input[type=range].vertical-slider-rotated::-moz-range-thumb:hover {
+        background: #27120f !important;
+        transform: scale(1.05);
+    }
+    .vertical-slider-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        height: 100%;
+        padding: 10px 0 10px 25px;
+    }
+    .vertical-slider-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        margin: 10px 0;
+        width: 100%;
+    }
+    .info-icon-btn:hover {
+        background-color: #495057 !important;
+    }
+    .info-odds-btn:hover {
+        color: #5d4037 !important;
+    }
+
+    .form-control-input {
+        background-color: #ffffff !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #5d5037 !important;
+        font-size: 1.1em;
+        font-weight: 700;
+        width: 100px;
+        text-align: center;
+    }
+    .form-control-input:focus {
+        border-color: #8c7e6c !important;
+        outline: none;
+        box-shadow: 0 0 0 0.15rem rgba(140, 126, 108, 0.25) !important;
+    }
+
+    /* Payout Live Calculator styles */
+    .calc-card {
+        background-color: #faf5eb !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-top: 5px;
+    }
+    .calc-label {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        font-weight: bold;
+        color: #8c7e6c;
+        letter-spacing: 0.5px;
+    }
+    .calc-val {
+        font-size: 1.95em;
+        font-weight: 850;
+        color: #28a745;
+    }
+
+    .btn-primary-btn {
+        background-color: #8c7e6c !important;
+        border-color: #8c7e6c !important;
+        color: #ffffff !important;
+        font-weight: bold;
+        padding: 12px 40px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(93, 80, 55, 0.1);
+        cursor: pointer;
+        border: none;
+    }
+    .btn-primary-btn:hover {
+        background-color: #5d4037 !important;
+        border-color: #5d4037 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(93, 80, 55, 0.15);
+    }
+    
+    /* Highlight/pulse effect for bet sizing error */
+    .highlight-card {
+        border: 2.5px solid #d8b28a !important; /* Premium warning color */
+        box-shadow: 0 0 15px rgba(216, 178, 138, 0.6) !important;
+        animation: card-pulse 0.8s infinite alternate;
+    }
+    @keyframes card-pulse {
+        from { box-shadow: 0 0 5px rgba(216, 178, 138, 0.2); }
+        to { box-shadow: 0 0 20px rgba(216, 178, 138, 0.8); }
+    }
+</style>
+
+<div class="bet-container">
+    
+    <!-- Round Progress Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 style="color: #5d5037; font-weight: 800; margin: 0; font-size: 1.4rem;">Chess Match Betting</h4>
+        <span style="background-color: #dfd0ab; color: #5d5037; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">
+            Round {{ player.round_number }} of 12
+        </span>
+    </div>
+    
+    <!-- New Matchup Notice Banner -->
+    <div id="new-matchup-alert" class="instruction-box p-3 border rounded mb-2 animate-pulse" style="background-color: #fdf5e6; border: 1.5px solid #d8b28a; color: #8d6e63; border-radius: 12px; position: relative; box-shadow: 0 4px 10px rgba(140, 126, 108, 0.06); padding-right: 40px !important;">
+        {{ if player.round_number == 1 }}
+            <strong style="font-size: 1.05em;">🔔 Practice Round Matchup:</strong> This practice round features a series of games played by two top grandmasters.
+        {{ else }}
+            <strong style="font-size: 1.05em;">🔔 New Matchup:</strong> This round features **two new different players**. Please inspect their new ELO ratings below before placing your bets.
+        {{ endif }}
+        <span onclick="document.getElementById('new-matchup-alert').style.display='none'" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.5em; font-weight: bold; line-height: 1;">&times;</span>
+    </div>
+
+    <div class="row align-items-stretch">
+        
+        <!-- Left Column: Elo Card (Top) & Bet Choice Card (Bottom) -->
+        <div class="col-md-8 mb-3 d-flex flex-column gap-3">
+            
+            <!-- Elo Comparison Card (Same width as Bet Choice below) -->
+            <div class="elo-comparison-card w-100 flex-grow-1 d-flex flex-column justify-content-between" onclick="showWinChance('both')" style="box-shadow: 0 4px 15px rgba(93, 80, 55, 0.05); padding: 24px;">
+                <!-- Elo Header with Flexbox (No absolute positioning collisions) -->
+                <div class="elo-header-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
+                    {{ if player.white_on_left }}
+                        <div class="elo-player-info text-center" style="width: 35%;">
+                            <div class="elo-player-label">White Player</div>
+                            <div class="elo-player-value" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer;">{{ player.white_elo }}</div>
+                        </div>
+                        <div class="elo-diff-badge-container text-center" style="width: 30%;">
+                            <div class="elo-diff-badge" id="active-elo-badge" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; white-space: nowrap;"></div>
+                        </div>
+                        <div class="elo-player-info text-center" style="width: 35%;">
+                            <div class="elo-player-label">Black Player</div>
+                            <div class="elo-player-value" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer;">{{ player.black_elo }}</div>
+                        </div>
+                    {{ else }}
+                        <div class="elo-player-info text-center" style="width: 35%;">
+                            <div class="elo-player-label">Black Player</div>
+                            <div class="elo-player-value" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer;">{{ player.black_elo }}</div>
+                        </div>
+                        <div class="elo-diff-badge-container text-center" style="width: 30%;">
+                            <div class="elo-diff-badge" id="active-elo-badge" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; white-space: nowrap;"></div>
+                        </div>
+                        <div class="elo-player-info text-center" style="width: 35%;">
+                            <div class="elo-player-label">White Player</div>
+                            <div class="elo-player-value" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer;">{{ player.white_elo }}</div>
+                        </div>
+                    {{ endif }}
+                </div>
+
+                <!-- Elo Bars Row -->
+                <div class="row" style="margin: 0; width: 100%;">
+                    {{ if player.white_on_left }}
+                        <!-- Left side White Bar -->
+                        <div class="col-6 text-center">
+                            <div class="elo-bars-wrapper" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; margin-top: 0;">
+                                <div class="elo-vbar-container">
+                                    <div class="elo-vbar elo-vbar-white" id="active-vbar-white">
+                                        <span class="elo-bar-value-inside" id="active-elo-val-white"></span>
+                                    </div>
+                                    <div class="elo-vbar-label">WHITE</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right side Black Bar -->
+                        <div class="col-6 text-center">
+                            <div class="elo-bars-wrapper" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; margin-top: 0;">
+                                <div class="elo-vbar-container">
+                                    <div class="elo-vbar elo-vbar-black" id="active-vbar-black">
+                                        <span class="elo-bar-value-inside" id="active-elo-val-black"></span>
+                                    </div>
+                                    <div class="elo-vbar-label">BLACK</div>
+                                </div>
+                            </div>
+                        </div>
+                    {{ else }}
+                        <!-- Left side Black Bar -->
+                        <div class="col-6 text-center">
+                            <div class="elo-bars-wrapper" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; margin-top: 0;">
+                                <div class="elo-vbar-container">
+                                    <div class="elo-vbar elo-vbar-black" id="active-vbar-black">
+                                        <span class="elo-bar-value-inside" id="active-elo-val-black"></span>
+                                    </div>
+                                    <div class="elo-vbar-label">BLACK</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right side White Bar -->
+                        <div class="col-6 text-center">
+                            <div class="elo-bars-wrapper" onclick="event.stopPropagation(); showWinChance('both')" style="cursor: pointer; margin-top: 0;">
+                                <div class="elo-vbar-container">
+                                    <div class="elo-vbar elo-vbar-white" id="active-vbar-white">
+                                        <span class="elo-bar-value-inside" id="active-elo-val-white"></span>
+                                    </div>
+                                    <div class="elo-vbar-label">WHITE</div>
+                                </div>
+                            </div>
+                        </div>
+                    {{ endif }}
+                </div>
+            </div>
+
+            <!-- Bet Choice Card -->
+            <div class="card-panel w-100">
+                <h6 class="font-weight-bold" style="border-bottom: 2px solid #dfd0ab; padding-bottom: 8px; font-size: 0.82rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #8c7e6c; display: flex; align-items: center; margin-bottom: 1rem;">
+                    1. Choose Your Bet:
+                    <span class="info-odds-btn" onclick="event.stopPropagation(); showOddsExplanation()" style="cursor: pointer; font-size: 0.8em; margin-left: 8px; font-weight: bold; color: #8c7e6c; text-decoration: underline; text-transform: none; letter-spacing: 0px;" title="How odds work">(info about odds)</span>
+                </h6>
+                
+                <div class="row" style="margin: 0; width: 100%;">
+                    {{ if player.white_on_left }}
+                        <div class="col-6" style="padding: 0 10px;">
+                            <button type="button" class="choice-btn" id="btn-white" onclick="selectBet('white')">
+                                Bet on White<br>
+                                <small style="font-weight: 500;">Odds: {{ odds_w }}</small>
+                            </button>
+                        </div>
+                        <div class="col-6" style="padding: 0 10px;">
+                            <button type="button" class="choice-btn" id="btn-black" onclick="selectBet('black')">
+                                Bet on Black / Tie<br>
+                                <small style="font-weight: 500;">Odds: {{ odds_b }}</small>
+                            </button>
+                        </div>
+                    {{ else }}
+                        <div class="col-6" style="padding: 0 10px;">
+                            <button type="button" class="choice-btn" id="btn-black" onclick="selectBet('black')">
+                                Bet on Black / Tie<br>
+                                <small style="font-weight: 500;">Odds: {{ odds_b }}</small>
+                            </button>
+                        </div>
+                        <div class="col-6" style="padding: 0 10px;">
+                            <button type="button" class="choice-btn" id="btn-white" onclick="selectBet('white')">
+                                Bet on White<br>
+                                <small style="font-weight: 500;">Odds: {{ odds_w }}</small>
+                            </button>
+                        </div>
+                    {{ endif }}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Bet Sizing (Height stretches to match Left Column) -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div id="bet-sizing-card" class="card-panel w-100 d-flex flex-column justify-content-between" style="visibility: hidden; opacity: 0; transition: visibility 0.2s, opacity 0.2s;">
+                <div>
+                    <h6 class="font-weight-bold" style="border-bottom: 2px solid #dfd0ab; padding-bottom: 8px; font-size: 0.82rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #8c7e6c; margin-bottom: 1rem;">
+                        2. Adjust Bet Size
+                    </h6>
+                    
+                    <div class="vertical-slider-container">
+                        <div class="vertical-slider-wrapper">
+                            <!-- Vertical range slider (down 0, up 500) -->
+                            <div class="slider-rotated-container">
+                                <input type="range" class="vertical-slider-rotated" id="size-slider" min="0" max="500" value="0">
+                            </div>
+                            
+                            <div class="text-center d-flex flex-column align-items-center justify-content-center">
+                                <input type="number" class="form-control-input" id="size-input" min="0" max="500" value="0" style="width: 110px;">
+                                <div class="font-weight-bold mt-2" style="color: #5d5037; font-size: 1rem;">Points</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Live payout calculator card (Spans full page width) -->
+    <div class="calc-card w-100">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <div class="calc-label">Potential Payout (if win)</div>
+                <div class="calc-val" id="payout-value">0 Points</div>
+            </div>
+            <div class="col-md-5 text-muted text-sm font-italic" id="payout-formula" style="line-height: 1.4;">
+                Please select a side to calculate potential payout.
+            </div>
+        </div>
+    </div>
+
+    <div id="error-message-bet" class="alert alert-danger mb-3 text-center font-weight-bold" style="display: none;"></div>
+
+    <div class="d-flex justify-content-end mt-2">
+        <button type="button" class="btn-primary-btn btn-lg" onclick="validateAndSubmit()">Place Bet</button>
+    </div>
+
+</div>
+
+<input type="hidden" name="bet_choice" id="id_bet_choice">
+<input type="hidden" name="bet_size" id="id_bet_size" value="0">
+
+<!-- Info Modal structure -->
+<div id="infoModal" onclick="this.style.display='none'" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.55);">
+    <div class="modal-content" onclick="event.stopPropagation()" style="background-color: white; margin: 15% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.25); border: none;">
+        <h4 id="modalTitle" class="mb-3 font-weight-bold text-dark" style="color: #333 !important;"></h4>
+        <div id="modalBody" class="mb-4" style="color: #5d5037;"></div>
+        <button type="button" class="btn btn-secondary btn-md px-4" onclick="document.getElementById('infoModal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<script>
+    const pw = {{ player.p_white }};
+    const pb = 1.0 - pw;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Elo Card for active match
+        const wElo = {{ player.white_elo }};
+        const bElo = {{ player.black_elo }};
+        const badge = document.getElementById(`active-elo-badge`);
+        const vbarWhite = document.getElementById(`active-vbar-white`);
+        const vbarBlack = document.getElementById(`active-vbar-black`);
+        const valWhite = document.getElementById(`active-elo-val-white`);
+        const valBlack = document.getElementById(`active-elo-val-black`);
+
+        const diff = wElo - bElo;
+        badge.className = 'elo-diff-badge';
+        if (diff === 0) {
+            badge.innerText = 'Equal Elo';
+            badge.classList.add('equal-rating');
+        } else if (diff > 0) {
+            badge.innerText = `White +${diff} Elo`;
+            badge.classList.add('white-advantage');
+        } else {
+            badge.innerText = `Black +${Math.abs(diff)} Elo`;
+            badge.classList.add('black-advantage');
+        }
+
+        const whiteHeight = Math.max(0, Math.min(100, 0.22162 * wElo - 542.7));
+        const blackHeight = Math.max(0, Math.min(100, 0.22162 * bElo - 542.7));
+
+        if (vbarWhite) vbarWhite.style.height = `${whiteHeight}%`;
+        if (vbarBlack) vbarBlack.style.height = `${blackHeight}%`;
+        if (valWhite) valWhite.innerText = `${wElo}`;
+        if (valBlack) valBlack.innerText = `${bElo}`;
+
+        // Setup input bindings
+        const slider = document.getElementById('size-slider');
+        const input = document.getElementById('size-input');
+        const hiddenSize = document.getElementById('id_bet_size');
+        
+        function updateBetSize(val) {
+            let numericVal = parseInt(val);
+            if (isNaN(numericVal)) numericVal = 0;
+            numericVal = Math.max(0, Math.min(500, numericVal));
+            
+            slider.value = numericVal;
+            input.value = numericVal;
+            hiddenSize.value = numericVal;
+            
+            // Color lower track brown, upper track white dynamically (rotated slider flows left-to-right before transform)
+            const percent = (numericVal / 500) * 100;
+            slider.style.background = `linear-gradient(to right, #5d4037 0%, #5d4037 ${percent}%, #ffffff ${percent}%, #ffffff 100%)`;
+            
+            // Clear highlighting and error if bet size is adjusted above 0
+            if (numericVal > 0) {
+                const sizingCard = document.getElementById('bet-sizing-card');
+                if (sizingCard) {
+                    sizingCard.classList.remove('highlight-card');
+                }
+                const errorEl = document.getElementById('error-message-bet');
+                if (errorEl && errorEl.innerText.includes('at least 1 point')) {
+                    errorEl.style.display = 'none';
+                }
+            }
+            
+            updatePayout();
+        }
+        
+        slider.addEventListener('input', function() { updateBetSize(this.value); });
+        input.addEventListener('input', function() { updateBetSize(this.value); });
+        
+        // Initialize slider background and payout values on load
+        updateBetSize(hiddenSize.value || 0);
+        
+        // Show/hide bet sizing card initially
+        const initialChoice = document.getElementById('id_bet_choice').value || '';
+        const sizingCard = document.getElementById('bet-sizing-card');
+        if (initialChoice && sizingCard) {
+            sizingCard.style.visibility = 'visible';
+            sizingCard.style.opacity = '1';
+        } else if (sizingCard) {
+            sizingCard.style.visibility = 'hidden';
+            sizingCard.style.opacity = '0';
+        }
+    });
+
+    let selectedChoice = document.getElementById('id_bet_choice').value || '';
+    const isML = {{ is_ML_js }};
+    const mlW = {{ ml_w_raw }};
+    const mlB = {{ ml_b_raw }};
+    const decW = {{ dec_w_raw }};
+    const decB = {{ dec_b_raw }};
+
+    function selectBet(choice) {
+        selectedChoice = choice;
+        document.getElementById('id_bet_choice').value = choice;
+        
+        const sizingCard = document.getElementById('bet-sizing-card');
+        if (sizingCard) {
+            sizingCard.style.visibility = 'visible';
+            sizingCard.style.opacity = '1';
+        }
+        
+        const btnWhite = document.getElementById('btn-white');
+        const btnBlack = document.getElementById('btn-black');
+        
+        if (btnWhite) btnWhite.classList.remove('selected-white');
+        if (btnBlack) btnBlack.classList.remove('selected-black');
+        
+        if (choice === 'white' && btnWhite) {
+            btnWhite.classList.add('selected-white');
+        } else if (choice === 'black' && btnBlack) {
+            btnBlack.classList.add('selected-black');
+        }
+        
+        document.getElementById('error-message-bet').style.display = 'none';
+        updatePayout();
+    }
+
+    function updatePayout() {
+        const betSize = parseInt(document.getElementById('id_bet_size').value) || 0;
+        const payoutEl = document.getElementById('payout-value');
+        const payoutFormulaEl = document.getElementById('payout-formula');
+        
+        if (!selectedChoice) {
+            payoutEl.innerText = '0 Points';
+            payoutFormulaEl.innerText = 'Please select a side to calculate potential payout.';
+            return;
+        }
+        
+        let payout = 0;
+        let oddsText = '';
+        let formulaText = '';
+        
+        if (selectedChoice === 'white') {
+            if (isML) {
+                const ml = mlW;
+                if (ml > 0) {
+                    payout = (betSize / 100) * ml + betSize;
+                } else {
+                    payout = (betSize / Math.abs(ml)) * 100 + betSize;
+                }
+                oddsText = (ml > 0 ? '+' : '') + ml;
+                formulaText = `Calculation: (${betSize} Points / ${ml > 0 ? '100' : Math.abs(ml)}) * ${ml > 0 ? ml : '100'} + ${betSize} = ${Math.round(payout)} Points`;
+            } else {
+                payout = betSize * decW;
+                oddsText = decW.toFixed(2);
+                formulaText = `Calculation: ${betSize} Points * ${oddsText} = ${Math.round(payout)} Points`;
+            }
+        } else {
+            if (isML) {
+                const ml = mlB;
+                if (ml > 0) {
+                    payout = (betSize / 100) * ml + betSize;
+                } else {
+                    payout = (betSize / Math.abs(ml)) * 100 + betSize;
+                }
+                oddsText = (ml > 0 ? '+' : '') + ml;
+                formulaText = `Calculation: (${betSize} Points / ${ml > 0 ? '100' : Math.abs(ml)}) * ${ml > 0 ? ml : '100'} + ${betSize} = ${Math.round(payout)} Points`;
+            } else {
+                payout = betSize * decB;
+                oddsText = decB.toFixed(2);
+                formulaText = `Calculation: ${betSize} Points * ${oddsText} = ${Math.round(payout)} Points`;
+            }
+        }
+        
+        payoutEl.innerText = `${Math.round(payout)} Points`;
+        payoutFormulaEl.innerText = formulaText;
+    }
+
+    function showWinChance(side) {
+        const modal = document.getElementById('infoModal');
+        document.getElementById('modalTitle').innerText = "Match Win Probabilities";
+        let chanceW = pw * 100;
+        let chanceB = pb * 100;
+        document.getElementById('modalBody').innerHTML = `
+            <div style='text-align: left;'>
+                <p>Based on their Elo ratings, the players have the following historical probabilities of winning:</p>
+                <ul style='list-style-type: none; padding-left: 0;'>
+                    <li style='margin-bottom: 8px;'>⚪ <strong>White Player:</strong> ~${chanceW.toFixed(1)}%</li>
+                    <li>⚫ <strong>Black Player (or Draw):</strong> ~${chanceB.toFixed(1)}%</li>
+                </ul>
+            </div>
+        `;
+        modal.style.display = 'block';
+    }
+
+    function showOddsExplanation() {
+        const modal = document.getElementById('infoModal');
+        document.getElementById('modalTitle').innerText = "{{ if player.is_ML }}Moneyline Payout Explanation{{ else }}Decimal Payout Explanation{{ endif }}";
+        
+        let content = '';
+        {{ if player.is_ML }}
+            content = `
+                <div style="text-align: left; font-size: 0.95em; line-height: 1.5; color: #333;">
+                    <p>Moneyline odds show profit relative to a 100-Point base. You bet your points on a selected game.</p>
+                    <p style="font-weight: bold; color: #8c7e6c; margin-bottom: 12px;">Note: The calculations below explicitly assume an example bet size of 200 points.</p>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; margin-bottom: 12px; border-radius: 6px; color: #5d5037;">
+                        <strong style="color: #28a745;">1. Positive Odds (+): Underdog</strong><br>
+                        Formula: <code>(Bet / 100) * Odds + Bet</code><br>
+                        Example: <strong>+300</strong> odds. Bet size: 200. Payout: <code>(200 / 100) * 300 + 200 = 800 Points</code>.
+                    </div>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; border-radius: 6px; color: #5d5037;">
+                        <strong style="color: #007bff;">2. Negative Odds (-): Favorite</strong><br>
+                        Formula: <code>(Bet / |Odds|) * 100 + Bet</code><br>
+                        Example: <strong>-400</strong> odds. Bet size: 200. Payout: <code>(200 / 400) * 100 + 200 = 250 Points</code>.
+                    </div>
+                </div>
+            `;
+        {{ else }}
+            content = `
+                <div style="text-align: left; font-size: 0.95em; line-height: 1.5; color: #333;">
+                    <p>Decimal odds represent the total return (your bet plus profit) for every 1 Point bet.</p>
+                    <p style="font-weight: bold; color: #8c7e6c; margin-bottom: 12px;">Note: The calculations below explicitly assume an example bet size of 200 points.</p>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; border-radius: 6px; color: #5d5037;">
+                        Formula: <code>Bet * Odds</code><br>
+                        Example: <strong>4.0</strong> odds. Bet size: 200. Payout: <code>200 * 4.0 = 800 Points</code>.<br>
+                        Example: <strong>1.5</strong> odds. Bet size: 200. Payout: <code>200 * 1.5 = 300 Points</code>.
+                    </div>
+                </div>
+            `;
+        {{ endif }}
+        
+        document.getElementById('modalBody').innerHTML = content;
+        modal.style.display = 'block';
+    }
+
+    function validateAndSubmit() {
+        if (!selectedChoice) {
+            const errorEl = document.getElementById('error-message-bet');
+            errorEl.innerText = 'Please select a side (White or Black / Tie) before placing your bet.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        const betSize = parseInt(document.getElementById('id_bet_size').value) || 0;
+        if (betSize <= 0) {
+            const errorEl = document.getElementById('error-message-bet');
+            errorEl.innerText = 'You must bet at least 1 point to proceed. Please adjust your bet size above 0.';
+            errorEl.style.display = 'block';
+            
+            // Highlight the card
+            const sizingCard = document.getElementById('bet-sizing-card');
+            if (sizingCard) {
+                sizingCard.classList.add('highlight-card');
+                // Scroll up/align to it
+                sizingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+        document.querySelector('form').submit();
+    }
+</script>
+{{ endblock }}

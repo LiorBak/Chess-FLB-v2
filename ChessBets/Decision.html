@@ -1,0 +1,1709 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    Place Your Bets
+{{ endblock }}
+
+{{ block content }}
+
+<style>
+    body, .otree-body {
+        background-color: #efe6d5 !important; /* Premium soft light brown */
+    }
+
+    .hl-table {
+        width: 100%;
+        max-width: 960px;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #efe6d5 !important; /* Matches page background */
+        border-radius: 12px;
+        border: 1px solid #dfd0ab;
+        box-shadow: 0 4px 15px rgba(93, 80, 55, 0.08);
+    }
+    .hl-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+    .hl-table thead th:last-child {
+        border-top-right-radius: 12px;
+    }
+    .hl-table th {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(93, 80, 55, 0.05);
+    }
+    
+    /* Sticky header column styles matching ELO boxes */
+    .th-white {
+        background-color: #ffffff !important;
+        color: #333 !important;
+        border: 2px solid #dee2e6 !important;
+        border-bottom: 3px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 25%;
+    }
+    .th-black {
+        background-color: #343a40 !important;
+        color: #ffffff !important;
+        border: 2px solid #000 !important;
+        border-bottom: 3px solid #000 !important;
+        font-weight: bold;
+        width: 25%;
+    }
+    .th-game {
+        background-color: #dfd0ab !important;
+        color: #5d5037 !important;
+        border: 1px solid #d3c49e !important;
+        border-bottom: 2px solid #bfae85 !important;
+        font-weight: bold;
+        width: 70px;
+    }
+    .th-won {
+        background-color: #dfd0ab !important;
+        color: #5d5037 !important;
+        border: 1px solid #d3c49e !important;
+        border-bottom: 2px solid #bfae85 !important;
+        font-weight: bold;
+        width: 110px;
+    }
+    .th-details {
+        background-color: #dfd0ab !important;
+        color: #5d5037 !important;
+        border: 1px solid #d3c49e !important;
+        border-bottom: 2px solid #bfae85 !important;
+        font-weight: bold;
+        width: 180px;
+    }
+    .th-payout {
+        background-color: #dfd0ab !important;
+        color: #5d5037 !important;
+        border: 1px solid #d3c49e !important;
+        border-bottom: 2px solid #bfae85 !important;
+        font-weight: bold;
+        width: 100px;
+    }
+    
+    /* Rows only have horizontal borders */
+    .hl-table tr {
+        border-bottom: 1px solid #eee7db;
+        transition: background-color 0.5s ease, box-shadow 0.5s ease;
+    }
+    .hl-table td {
+        border: none;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    /* Game Number Pill */
+    .game-num-pill {
+        display: inline-block;
+        background-color: #efe6d5;
+        border: 1px solid #dfd0ab;
+        border-radius: 12px;
+        padding: 6px 16px;
+        font-weight: bold;
+        color: #5d5037;
+        font-size: 0.95em;
+        min-width: 45px;
+    }
+    
+    /* Choice Buttons (Unselected = Light Brown) */
+    .choice-btn {
+        display: block;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 1px solid #dfd0ab;
+        background-color: #efe6d5;
+        color: #5d5037;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 2px 4px rgba(93, 80, 55, 0.02);
+        box-sizing: border-box;
+        width: 100%;
+        text-align: center;
+    }
+    .choice-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(93, 80, 55, 0.06);
+        border-color: #c8bda9;
+        background-color: #e5dcce;
+    }
+    
+    /* Selected States */
+    .selected-white {
+        background-color: #ffffff !important;
+        color: #5d5037 !important;
+        border-color: #8c7e6c !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 8px rgba(140, 126, 108, 0.15), inset 0 0 0 1.5px #8c7e6c !important;
+    }
+    
+    .selected-black {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #212529 !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 8px rgba(33, 37, 41, 0.25) !important;
+    }
+
+    .unselected-row-highlight {
+        background-color: rgba(220, 53, 69, 0.08) !important;
+        border: 2px solid #dc3545 !important;
+        box-shadow: 0 0 8px rgba(220, 53, 69, 0.2);
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .animate-pulse {
+        animation: pulse 1.5s infinite;
+    }
+    
+    .info-icon-btn:hover {
+        background-color: #495057 !important;
+    }
+    
+    .switch-line td {
+        border-bottom: 3px solid #8c7e6c !important;
+    }
+
+    /* Winner Pill Badges */
+    .winner-pill {
+        display: inline-block;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: bold;
+        font-size: 0.9em;
+        text-align: center;
+        min-width: 90px;
+    }
+    .winner-pill.white-player {
+        background-color: #ffffff;
+        color: #333;
+        border: 1px solid #dee2e6;
+    }
+    .winner-pill.black-player {
+        background-color: #343a40;
+        color: #ffffff;
+        border: 1px solid #000;
+    }
+    .winner-pill.draw-player {
+        background-color: #6c757d;
+        color: #ffffff;
+        border: 1px solid #6c757d;
+    }
+    
+    /* Payout Pill Badges */
+    .payout-pill {
+        display: inline-block;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: bold;
+        font-size: 0.95em;
+        text-align: center;
+        min-width: 80px;
+    }
+    .win-pill {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    @keyframes pop-in {
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    /* Confetti Particle Animation */
+    .confetti-particle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1000;
+    }
+    
+    @keyframes burst-particle {
+        0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(var(--x), var(--y)) scale(0.3);
+            opacity: 0;
+        }
+    }
+    .lose-pill {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .detail-text {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+
+    .placeholder-dash {
+        color: #adb5bd;
+        font-weight: bold;
+    }
+
+    /* Modal */
+    #infoModal {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        left: 0; top: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.55);
+    }
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        border: none;
+    }
+    .instruction-box {
+        max-width: 960px;
+        margin: 20px auto;
+    }
+    .instruction-text { font-size: 0.95em; color: #495057; }
+
+    /* Segmented Control / Toggle Switch */
+    .toggle-container {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+    }
+    .segmented-control {
+        display: inline-flex;
+        background-color: #e9ecef;
+        padding: 4px;
+        border-radius: 30px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #dee2e6;
+    }
+    .control-btn {
+        padding: 8px 24px;
+        border-radius: 26px;
+        border: none;
+        background: transparent;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        outline: none !important;
+    }
+    .control-btn.active {
+        background-color: #ffffff;
+        color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .control-btn:hover:not(.active) {
+        color: #212529;
+    }
+
+    /* Elo Comparison Widget */
+    .elo-comparison-card {
+        max-width: 960px;
+        margin: 20px auto;
+        background: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(93, 80, 55, 0.04);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .elo-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    .elo-player-info {
+        width: 30%;
+    }
+    .elo-player-info.left {
+        text-align: left;
+    }
+    .elo-player-info.right {
+        text-align: right;
+    }
+    .elo-player-label {
+        font-size: 0.85em;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #8c7e6c;
+        letter-spacing: 0.5px;
+    }
+    .elo-player-value {
+        font-size: 1.8em;
+        font-weight: 800;
+        color: #5d5037;
+        margin-top: 2px;
+    }
+    .elo-diff-badge-container {
+        text-align: center;
+        width: 40%;
+    }
+    .elo-diff-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.95em;
+        box-shadow: 0 2px 5px rgba(93, 80, 55, 0.05);
+    }
+    .elo-diff-badge.white-advantage {
+        background-color: #fdf5e6;
+        color: #8d6e63;
+        border: 1px solid #d8b28a;
+    }
+    .elo-diff-badge.black-advantage {
+        background-color: #e5dcce;
+        color: #212529;
+        border: 1px solid #8c7e6c;
+    }
+    .elo-diff-badge.equal-rating {
+        background-color: #f1ebd8;
+        color: #5d5037;
+        border: 1px solid #dfd0ab;
+    }
+    .elo-bars-wrapper {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 60px;
+        height: 140px;
+        margin: 20px auto 0;
+        width: 100%;
+        max-width: 400px;
+        border-bottom: 2px solid #dfd0ab;
+        padding-bottom: 5px;
+        position: relative;
+    }
+    .elo-vbar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80px;
+        height: 100%;
+        justify-content: flex-end;
+        position: relative;
+    }
+    .elo-vbar {
+        width: 100%;
+        border-radius: 6px 6px 0 0;
+        transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px rgba(93, 80, 55, 0.05);
+        position: relative; /* Essential for bottom positioning inside */
+    }
+    .elo-bar-value-inside {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: 850;
+        font-size: 0.88em;
+        letter-spacing: 0.5px;
+    }
+    .elo-vbar-white {
+        background: linear-gradient(180deg, #d8b28a, #fbf7f3);
+        border: 1px solid #d8b28a;
+        border-bottom: none;
+    }
+    .elo-vbar-white .elo-bar-value-inside {
+        color: #5d4037 !important;
+    }
+    .elo-vbar-black {
+        background: linear-gradient(180deg, #212529, #777777);
+        border: 1px solid #212529;
+        border-bottom: none;
+    }
+    .elo-vbar-black .elo-bar-value-inside {
+        color: #ffffff !important;
+    }
+    .elo-vbar-label {
+        font-size: 0.8em;
+        font-weight: bold;
+        color: #5d5037;
+        letter-spacing: 0.5px;
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+
+    /* General bootstrap components overrides for warm tan theme */
+    .bg-light, .alert-secondary {
+        background-color: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        color: #5d5037 !important;
+    }
+    #results-summary-card, #hist-results-summary-card {
+        background-color: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        box-shadow: 0 4px 15px rgba(93, 80, 55, 0.05) !important;
+    }
+</style>
+
+<!-- Round Navigation Tab Bar -->
+<div class="instruction-box mb-4">
+    <div class="nav nav-pills" id="round-tabs" style="gap: 5px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary active" id="tab-current" onclick="showActiveRound()">
+            Current Round (Round {{ player.round_number }})
+        </button>
+    </div>
+</div>
+
+<div id="active-round-container">
+    <!-- New Matchup Notice Banner -->
+    <div id="new-matchup-alert" class="instruction-box p-3 border rounded mb-4 animate-pulse" style="background-color: #fdf5e6; border: 1.5px solid #d8b28a; color: #8d6e63; border-radius: 12px; position: relative; box-shadow: 0 4px 10px rgba(140, 126, 108, 0.06); padding-right: 40px !important;">
+        {{ if player.round_number == 1 }}
+            <strong style="font-size: 1.05em;">🔔 Practice Round Matchup:</strong> This round features a practice series of games played by two top grandmasters.
+        {{ else }}
+            <strong style="font-size: 1.05em;">🔔 New Matchup:</strong> This round features **two new different players**. Please inspect their new ELO ratings below before placing your bets.
+        {{ endif }}
+        <span onclick="document.getElementById('new-matchup-alert').style.display='none'" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.5em; font-weight: bold; line-height: 1;">&times;</span>
+    </div>
+
+    <div class="instruction-box p-3 border rounded bg-light mb-4">
+        <p class="mb-2 font-weight-bold" style="font-size: 1.05em; color: #1a252f; line-height: 1.5;">
+            You are about to bet on 10 consecutive games played by the same two top grandmasters in a world-class chess tournament. Each bet is for 200 points and will pay out according to the published odds in its row. Before making your predictions, you may consult the players' Elo ratings to gauge their relative strength. Note that the Black player has a slight advantage. All displayed odds are {{ if player.is_ML }}Money lines{{ else }}Decimal odds{{ endif }}.
+            <span class="info-icon-btn" onclick="showOddsExplanation()" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; background-color: #6c757d; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 13px; margin-left: 6px; font-weight: bold; vertical-align: middle; transition: background-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" title="How odds work">i</span>
+        </p>
+        <p class="mb-0 text-muted" style="font-size: 0.95em; line-height: 1.5;">
+        {{ if player.white_best_on_top }}
+            At the top, the payout for <b>White</b> is high. As you move down, <b>Black / Tie's</b> payout becomes more attractive.
+            Your selection marks your "turning point": Above the line you bet on White, and below (including your selection) you switch to Black / Tie.
+        {{ else }}
+            At the top, the payout for <b>Black / Tie</b> is high. As you move down, <b>White's</b> payout becomes more attractive.
+            Your selection marks your "turning point": Above the line you bet on Black / Tie, and below (including your selection) you switch to White.
+        {{ endif }}
+    </p>
+    </div>
+
+    <!-- Elo Comparison Widget -->
+    <div class="elo-comparison-card">
+        <div class="elo-header-container">
+            <div class="elo-player-info left">
+                <div class="elo-player-label">White Player</div>
+                <div class="elo-player-value">{{ player.white_elo }}</div>
+            </div>
+            <div class="elo-diff-badge-container">
+                <div class="elo-diff-badge" id="active-elo-badge"></div>
+            </div>
+            <div class="elo-player-info right">
+                <div class="elo-player-label">Black Player</div>
+                <div class="elo-player-value">{{ player.black_elo }}</div>
+            </div>
+        </div>
+        
+        <div class="elo-bars-wrapper">
+            <!-- White Bar -->
+            <div class="elo-vbar-container">
+                <div class="elo-vbar elo-vbar-white" id="active-vbar-white">
+                    <span class="elo-bar-value-inside" id="active-elo-val-white"></span>
+                </div>
+                <div class="elo-vbar-label">WHITE</div>
+            </div>
+            
+            <!-- Black Bar -->
+            <div class="elo-vbar-container">
+                <div class="elo-vbar elo-vbar-black" id="active-vbar-black">
+                    <span class="elo-bar-value-inside" id="active-elo-val-black"></span>
+                </div>
+                <div class="elo-vbar-label">BLACK</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toggle-container mb-3" style="display: none !important;">
+    <div class="segmented-control">
+        <button type="button" class="control-btn active" id="btn-use-switching-point" onclick="setBettingMode('switching')">Use switching point</button>
+        <button type="button" class="control-btn" id="btn-bet-per-single" onclick="setBettingMode('single')">Bet per single game</button>
+    </div>
+</div>
+
+<div id="switching-point-emphasis-notice" class="instruction-box p-3 border rounded bg-light mb-4 text-center text-muted font-italic" style="font-size: 0.95em; max-width: 960px; display: none;">
+    💡 <strong>Note:</strong> Each game is resolved as an independent match with its own unique outcome, even though the switching point groups your bets into two visual blocks.
+</div>
+
+<table class="hl-table">
+    <thead>
+        <tr>
+            <th class="th-game">Game</th>
+            {{ if player.white_on_left }}
+                <th class="th-white" onclick="showWinChance('White')">Bet on White<br><small>(Elo {{ player.white_elo }})</small></th>
+                <th class="th-black" onclick="showWinChance('Black / Tie')">Bet on Black / Tie<br><small>(Elo {{ player.black_elo }})</small></th>
+            {{ else }}
+                <th class="th-black" onclick="showWinChance('Black / Tie')">Bet on Black / Tie<br><small>(Elo {{ player.black_elo }})</small></th>
+                <th class="th-white" onclick="showWinChance('White')">Bet on White<br><small>(Elo {{ player.white_elo }})</small></th>
+            {{ endif }}
+            <th class="th-won">Who Won</th>
+            <th class="th-details">Game Details</th>
+            <th class="th-payout">Payout</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ for r in rows }}
+        <tr id="row-{{ r.index }}" 
+            data-outcome="{{ r.outcome }}" 
+            data-details="{{ r.details }}" 
+            data-moves="{{ r.moves }}"
+            data-pw="{{ r.pw }}"
+            data-payout-white="{{ r.payout_if_white }}"
+            data-payout-black="{{ r.payout_if_black }}">
+            <td style="padding: 12px 4px; width: 70px;">
+                <div class="game-num-pill">{{ r.index }}</div>
+            </td>
+            {{ if player.white_on_left }}
+                <td onclick="setSwitch({{ r.index }}, true)" style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn white-btn" style="position: relative; overflow: hidden;">
+                        <span style="position: relative; z-index: 3;">{{ r.val_w }}</span>
+                        <div class="selection-stripe white-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; display: none; z-index: 1;"></div>
+                        <div class="pred-bar white-pred-bar" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 0%; background-color: #d8b28a; transition: width 0.3s ease; z-index: 2;"></div>
+                    </div>
+                </td>
+                <td onclick="setSwitch({{ r.index }}, false)" style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn black-btn" style="position: relative; overflow: hidden;">
+                        <span style="position: relative; z-index: 3;">{{ r.val_b }}</span>
+                        <div class="selection-stripe black-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; display: none; z-index: 1;"></div>
+                        <div class="pred-bar black-pred-bar" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 0%; background-color: #555555; transition: width 0.3s ease; z-index: 2;"></div>
+                    </div>
+                </td>
+            {{ else }}
+                <td onclick="setSwitch({{ r.index }}, false)" style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn black-btn" style="position: relative; overflow: hidden;">
+                        <span style="position: relative; z-index: 3;">{{ r.val_b }}</span>
+                        <div class="selection-stripe black-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; display: none; z-index: 1;"></div>
+                        <div class="pred-bar black-pred-bar" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 0%; background-color: #555555; transition: width 0.3s ease; z-index: 2;"></div>
+                    </div>
+                </td>
+                <td onclick="setSwitch({{ r.index }}, true)" style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn white-btn" style="position: relative; overflow: hidden;">
+                        <span style="position: relative; z-index: 3;">{{ r.val_w }}</span>
+                        <div class="selection-stripe white-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; display: none; z-index: 1;"></div>
+                        <div class="pred-bar white-pred-bar" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 0%; background-color: #d8b28a; transition: width 0.3s ease; z-index: 2;"></div>
+                    </div>
+                </td>
+            {{ endif }}
+            <td style="padding: 12px 4px; width: 110px;" class="cell-won">
+                <span class="placeholder-dash">-</span>
+                <div class="winner-pill white-player" style="display: none;">White</div>
+                <div class="winner-pill black-player" style="display: none;">Black</div>
+                <div class="winner-pill draw-player" style="display: none;">Draw</div>
+            </td>
+            <td style="padding: 12px 4px; width: 180px;" class="cell-details detail-text">
+                <span class="placeholder-dash">-</span>
+                <span class="ticker-moves" style="display: none;">0 moves</span>
+                <span class="final-details" style="display: none;">-</span>
+            </td>
+            <td style="padding: 12px 4px; width: 100px;" class="cell-payout">
+                <span class="placeholder-dash">-</span>
+                <div class="payout-pill win-pill" style="display: none;">+0 Pts</div>
+                <div class="payout-pill lose-pill" style="display: none;">0 Pts</div>
+            </td>
+        </tr>
+        {{ endfor }}
+    </tbody>
+</table>
+
+<!-- Summary Card (visible after simulation ends) -->
+<div id="results-summary-card" class="instruction-box p-4 border rounded shadow-sm bg-white mt-4 mb-4" style="display: none; transition: opacity 0.5s ease; opacity: 0;">
+    <h3 class="h4 mb-3 text-dark font-weight-bold" style="border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">
+        Match Simulation Complete
+    </h3>
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div id="practice-round-notice" class="p-2 bg-light border rounded text-muted font-italic text-sm mb-3" style="display: none;">
+                💡 This was a <strong>PRACTICE ROUND</strong>. These earnings will <strong>NOT</strong> be added to your final payout.
+            </div>
+            <div id="real-round-notice" class="p-2 bg-light border rounded text-success font-weight-bold text-sm mb-3" style="display: none;">
+                🎉 This was a <strong>REAL ROUND</strong> (Round {{ real_round_number }} of 11). One of your choices in this round could be selected as binding for your final payment.
+            </div>
+            
+            <div class="d-flex">
+                <div class="p-3 border rounded mr-3 text-center" style="min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #8c7e6c !important; color: #ffffff !important; border-color: #7d6b5c !important;">
+                    <div class="text-uppercase font-weight-bold small" style="color: #efe6d5 !important;">White Bets</div>
+                    <div class="small mb-2" style="color: #efe6d5 !important;">(Elo {{ player.white_elo }})</div>
+                    <div class="h3 font-weight-bold text-white mb-1" id="summary-white-bets">0</div>
+                    <div class="font-weight-bold small" id="summary-white-wins" style="color: #c3e6cb !important;">0 Wins</div>
+                </div>
+                <div class="p-3 border rounded text-center" style="min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #343a40 !important; color: #ffffff !important; border-color: #212529 !important;">
+                    <div class="text-uppercase font-weight-bold small" style="color: #ced4da !important;">Black / Tie Bets</div>
+                    <div class="small mb-2" style="color: #ced4da !important;">(Elo {{ player.black_elo }})</div>
+                    <div class="h3 font-weight-bold text-white mb-1" id="summary-black-bets">0</div>
+                    <div class="font-weight-bold small" id="summary-black-wins" style="color: #c3e6cb !important;">0 Wins</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mt-3 mt-md-0" style="border-left: 2px solid #f1f3f5;">
+            <div class="mb-3">
+                <div class="text-uppercase text-muted font-weight-bold tracking-wider small">Round Total Earnings</div>
+                <div class="display-4 font-weight-bold text-success my-1" id="summary-payout-points">+0</div>
+                <div class="font-weight-bold text-muted small">Points</div>
+            </div>
+            <div class="pt-2 border-top" id="summary-foregone-container">
+                <div class="text-uppercase text-muted font-weight-bold tracking-wider x-small" style="font-size: 0.8em;">Foregone Earnings</div>
+                <div class="h4 font-weight-bold text-warning my-1" id="summary-foregone-points">+0</div>
+                <div class="text-muted small" style="font-size: 0.8em;">Points</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="error-message-bets" class="instruction-box alert alert-danger mb-3 text-center font-weight-bold animate-pulse" style="display: none; max-width: 960px; margin: 20px auto;"></div>
+
+<div class="d-flex justify-content-end mt-4 mb-4 instruction-box">
+    <button type="button" class="btn btn-primary btn-lg px-5" id="submit-btn-bottom" onclick="checkAndSubmit()">Place Bets</button>
+</div>
+
+</div> <!-- End active-round-container -->
+
+<!-- History Round Container -->
+<div id="history-round-container" style="display: none;">
+    <div class="instruction-box alert alert-secondary mb-4 font-weight-bold" style="font-size: 1.05em; border-left: 5px solid #6c757d; max-width: 960px; margin: 0 auto 20px;">
+        ℹ️ Viewing Completed Round results. You cannot modify bets for past rounds.
+    </div>
+
+    <!-- History Elo Comparison Widget -->
+    <div class="elo-comparison-card mb-4">
+        <div class="elo-header-container">
+            <div class="elo-player-info left">
+                <div class="elo-player-label">White Player</div>
+                <div class="elo-player-value" id="hist-white-elo-val"></div>
+            </div>
+            <div class="elo-diff-badge-container">
+                <div class="elo-diff-badge" id="hist-elo-badge"></div>
+            </div>
+            <div class="elo-player-info right">
+                <div class="elo-player-label">Black Player</div>
+                <div class="elo-player-value" id="hist-black-elo-val"></div>
+            </div>
+        </div>
+        
+        <div class="elo-bars-wrapper">
+            <!-- White Bar -->
+            <div class="elo-vbar-container">
+                <div class="elo-vbar elo-vbar-white" id="hist-vbar-white">
+                    <span class="elo-bar-value-inside" id="hist-elo-val-white"></span>
+                </div>
+                <div class="elo-vbar-label">WHITE</div>
+            </div>
+            
+            <!-- Black Bar -->
+            <div class="elo-vbar-container">
+                <div class="elo-vbar elo-vbar-black" id="hist-vbar-black">
+                    <span class="elo-bar-value-inside" id="hist-elo-val-black"></span>
+                </div>
+                <div class="elo-vbar-label">BLACK</div>
+            </div>
+        </div>
+    </div>
+
+    <table class="hl-table" id="history-table">
+        <thead>
+            <tr>
+                <th class="th-game">Game</th>
+                <th class="th-white">Bet on White<br><small></small></th>
+                <th class="th-black">Bet on Black / Tie<br><small></small></th>
+                <th class="th-won">Who Won</th>
+                <th class="th-details">Game Details</th>
+                <th class="th-payout">Payout</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamically populated in JS -->
+        </tbody>
+    </table>
+
+    <!-- History Summary Card -->
+    <div id="hist-results-summary-card" class="instruction-box p-4 border rounded shadow-sm bg-white mt-4 mb-4" style="display: none; transition: opacity 0.5s ease; opacity: 0;">
+        <h3 class="h4 mb-3 text-dark font-weight-bold" id="hist-summary-title" style="border-bottom: 2px solid #e9ecef; padding-bottom: 10px;">
+            Match Simulation Complete
+        </h3>
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div id="hist-practice-round-notice" class="p-2 bg-light border rounded text-muted font-italic text-sm mb-3" style="display: none;">
+                    💡 This was a <strong>PRACTICE ROUND</strong>. These earnings were <strong>NOT</strong> added to your final payout.
+                </div>
+                <div id="hist-real-round-notice" class="p-2 bg-light border rounded text-success font-weight-bold text-sm mb-3" style="display: none;">
+                    🎉 This was a <strong>REAL ROUND</strong> (Round <span id="hist-real-round-num"></span> of 11). One of your choices in this round could be selected as binding for your final payment.
+                </div>
+                
+                <div class="d-flex">
+                    <div class="p-3 border rounded mr-3 text-center" style="min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #8c7e6c !important; color: #ffffff !important; border-color: #7d6b5c !important;">
+                        <div class="text-uppercase font-weight-bold small" style="color: #efe6d5 !important;">White Bets</div>
+                        <div class="small mb-2" id="hist-white-elo-2" style="color: #efe6d5 !important;"></div>
+                        <div class="h3 font-weight-bold text-white mb-1" id="hist-summary-white-bets">0</div>
+                        <div class="font-weight-bold small" id="hist-summary-white-wins" style="color: #c3e6cb !important;">0 Wins</div>
+                    </div>
+                    <div class="p-3 border rounded text-center" style="min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #343a40 !important; color: #ffffff !important; border-color: #212529 !important;">
+                        <div class="text-uppercase font-weight-bold small" style="color: #ced4da !important;">Black / Tie Bets</div>
+                        <div class="small mb-2" id="hist-black-elo-2" style="color: #ced4da !important;"></div>
+                        <div class="h3 font-weight-bold text-white mb-1" id="hist-summary-black-bets">0</div>
+                        <div class="font-weight-bold small" id="hist-summary-black-wins" style="color: #c3e6cb !important;">0 Wins</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center mt-3 mt-md-0" style="border-left: 2px solid #f1f3f5;">
+                <div class="mb-3">
+                    <div class="text-uppercase text-muted font-weight-bold tracking-wider small">Round Total Earnings</div>
+                    <div class="display-4 font-weight-bold text-success my-1" id="hist-summary-payout-points">+0</div>
+                    <div class="font-weight-bold text-muted small">Points</div>
+                </div>
+                <div class="pt-2 border-top" id="hist-summary-foregone-container">
+                    <div class="text-uppercase text-muted font-weight-bold tracking-wider x-small" style="font-size: 0.8em;">Foregone Earnings</div>
+                    <div class="h4 font-weight-bold text-warning my-1" id="hist-summary-foregone-points">+0</div>
+                    <div class="text-muted small" style="font-size: 0.8em;">Points</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4 mb-4 instruction-box">
+        <button type="button" class="btn btn-primary btn-lg px-5" onclick="showActiveRound()">Return to Current Round</button>
+    </div>
+</div>
+
+<input type="hidden" name="switching_point" id="switching_point">
+<input type="hidden" name="use_switching_point" id="use_switching_point" value="true">
+{{ for r in rows }}
+    <input type="hidden" name="choice{{ r.index }}_white" id="choice{{ r.index }}_white">
+{{ endfor }}
+
+<div id="infoModal" onclick="this.style.display='none'">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h4 id="modalTitle" class="mb-3 font-weight-bold text-dark"></h4>
+        <div id="modalBody" class="mb-4"></div>
+        <button type="button" class="btn btn-secondary btn-md px-4" onclick="document.getElementById('infoModal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<script>
+    const pWhite = {{ player.p_white }};
+    const wbTop = {{ if player.white_best_on_top }}true{{ else }}false{{ endif }};
+    const isPractice = {{ if player.is_practice }}true{{ else }}false{{ endif }};
+    const roundHistory = JSON.parse('{{ history_json|safe }}');
+    let bettingMode = 'single';
+
+    function updateEloCard(prefix, wElo, bElo) {
+        const badge = document.getElementById(`${prefix}-elo-badge`);
+        const vbarWhite = document.getElementById(`${prefix}-vbar-white`);
+        const vbarBlack = document.getElementById(`${prefix}-vbar-black`);
+        const valWhite = document.getElementById(`${prefix}-elo-val-white`);
+        const valBlack = document.getElementById(`${prefix}-elo-val-black`);
+        
+        if (!badge || !vbarWhite || !vbarBlack || !valWhite || !valBlack) return;
+
+        const diff = wElo - bElo;
+        
+        badge.className = 'elo-diff-badge';
+        if (diff === 0) {
+            badge.innerText = 'Ratings Equal';
+            badge.classList.add('equal-rating');
+        } else if (diff > 0) {
+            badge.innerText = `White +${diff} Elo Advantage`;
+            badge.classList.add('white-advantage');
+        } else {
+            badge.innerText = `Black +${Math.abs(diff)} Elo Advantage`;
+            badge.classList.add('black-advantage');
+        }
+
+        const minEloScale = 2500;
+        const maxEloScale = 2900;
+        
+        // Linear scale where 2900 is 100% (touches top advantage container)
+        // and 2530 is 18% (just high enough to display Elo rating value inside the bar)
+        const whiteHeight = Math.max(0, Math.min(100, 0.22162 * wElo - 542.7));
+        const blackHeight = Math.max(0, Math.min(100, 0.22162 * bElo - 542.7));
+
+        vbarWhite.style.height = `${whiteHeight}%`;
+        vbarBlack.style.height = `${blackHeight}%`;
+
+        valWhite.innerText = `${wElo}`;
+        valBlack.innerText = `${bElo}`;
+    }
+
+    // Prevent accidental form submission (e.g. via Enter key)
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            return false;
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize ELO Card for Active Round
+        const whiteElo = {{ player.white_elo }};
+        const blackElo = {{ player.black_elo }};
+        updateEloCard('active', whiteElo, blackElo);
+
+        // Initialize past round tabs
+        const tabsContainer = document.getElementById('round-tabs');
+        roundHistory.forEach(hist => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-secondary';
+            btn.style.fontSize = '0.9em';
+            btn.innerText = hist.is_practice ? 'Round 1 (Practice)' : `Round ${hist.round_number}`;
+            btn.onclick = () => showHistoryRound(hist.round_number);
+            tabsContainer.appendChild(btn);
+        });
+
+        const betsPlacedOnLoad = {{ if player.field_maybe_none('bets_placed') }}true{{ else }}false{{ endif }};
+        if (betsPlacedOnLoad) {
+            const savedSwitchingPoint = "{{ player.field_maybe_none('switching_point') }}";
+            const savedUseSwitchingPoint = {{ if player.field_maybe_none('use_switching_point') }}true{{ else }}false{{ endif }};
+            const savedChoices = {
+                '1': {{ if player.field_maybe_none('choice1_white') }}true{{ else }}false{{ endif }},
+                '2': {{ if player.field_maybe_none('choice2_white') }}true{{ else }}false{{ endif }},
+                '3': {{ if player.field_maybe_none('choice3_white') }}true{{ else }}false{{ endif }},
+                '4': {{ if player.field_maybe_none('choice4_white') }}true{{ else }}false{{ endif }},
+                '5': {{ if player.field_maybe_none('choice5_white') }}true{{ else }}false{{ endif }},
+                '6': {{ if player.field_maybe_none('choice6_white') }}true{{ else }}false{{ endif }},
+                '7': {{ if player.field_maybe_none('choice7_white') }}true{{ else }}false{{ endif }},
+                '8': {{ if player.field_maybe_none('choice8_white') }}true{{ else }}false{{ endif }},
+                '9': {{ if player.field_maybe_none('choice9_white') }}true{{ else }}false{{ endif }},
+                '10': {{ if player.field_maybe_none('choice10_white') }}true{{ else }}false{{ endif }}
+            };
+
+            bettingMode = savedUseSwitchingPoint ? 'switching' : 'single';
+            
+            const btnSwitching = document.getElementById('btn-use-switching-point');
+            const btnSingle = document.getElementById('btn-bet-per-single');
+            const noticeBox = document.getElementById('switching-point-emphasis-notice');
+            
+            if (btnSwitching && btnSingle) {
+                if (savedUseSwitchingPoint) {
+                    btnSwitching.classList.add('active');
+                    btnSingle.classList.remove('active');
+                    if (noticeBox) noticeBox.style.display = 'block';
+                } else {
+                    btnSwitching.classList.remove('active');
+                    btnSingle.classList.add('active');
+                    if (noticeBox) noticeBox.style.display = 'none';
+                }
+            }
+            const toggleCont = document.querySelector('.toggle-container');
+            if (toggleCont) {
+                toggleCont.style.pointerEvents = 'none';
+                toggleCont.style.opacity = '0.7';
+            }
+
+            document.getElementById('switching_point').value = savedSwitchingPoint;
+            
+            for (let i = 1; i <= 10; i++) {
+                const row = document.getElementById('row-' + i);
+                const wBtn = row.querySelector('.white-btn');
+                const bBtn = row.querySelector('.black-btn');
+                const hidden = document.getElementById('choice' + i + '_white');
+                const isWhite = savedChoices[i];
+
+                hidden.value = isWhite ? "1" : "0";
+                
+                if (isWhite) {
+                    wBtn.classList.add('selected-white');
+                } else {
+                    bBtn.classList.add('selected-black');
+                }
+
+                if (savedUseSwitchingPoint) {
+                    const swInt = parseInt(savedSwitchingPoint);
+                    if (i === swInt - 1) {
+                        row.classList.add('switch-line');
+                    }
+                }
+            }
+
+            startSimulation();
+        } else {
+            // Default to single mode on fresh page load
+            bettingMode = 'single';
+            document.getElementById('switching_point').value = "0";
+            document.getElementById('use_switching_point').value = "false";
+        }
+    });
+
+    function showWinChance(side) {
+        const modal = document.getElementById('infoModal');
+        document.getElementById('modalTitle').innerText = side + " Win Chance";
+        let chance = side === 'White' ? (pWhite * 100) : ((1 - pWhite) * 100);
+        document.getElementById('modalBody').innerText = "Based on the Elo difference, this outcome has an approximate " + chance.toFixed(1) + "% historical probability.";
+        modal.style.display = 'block';
+    }
+
+    function showOddsExplanation() {
+        const modal = document.getElementById('infoModal');
+        document.getElementById('modalTitle').innerText = "{{ if player.is_ML }}Moneyline Payout Explanation{{ else }}Decimal Payout Explanation{{ endif }}";
+        
+        let content = '';
+        {{ if player.is_ML }}
+            content = `
+                <div style="text-align: left; font-size: 0.95em; line-height: 1.5; color: #333;">
+                    <p>Moneyline odds show profit relative to a 100-Point base. You bet your 200-Point endowment on a selected game.</p>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; margin-bottom: 12px; border-radius: 6px;">
+                        <strong style="color: #28a745;">1. Positive Odds (+): Underdog</strong><br>
+                        Formula: <code>(Bet / 100) * Odds + Bet</code><br>
+                        Example: <strong>+300</strong> odds. Payout: <code>(200 / 100) * 300 + 200 = 800 Points</code>.
+                    </div>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; border-radius: 6px;">
+                        <strong style="color: #007bff;">2. Negative Odds (-): Favorite</strong><br>
+                        Formula: <code>(Bet / |Odds|) * 100 + Bet</code><br>
+                        Example: <strong>-400</strong> odds. Payout: <code>(200 / 400) * 100 + 200 = 250 Points</code>.
+                    </div>
+                </div>
+            `;
+        {{ else }}
+            content = `
+                <div style="text-align: left; font-size: 0.95em; line-height: 1.5; color: #333;">
+                    <p>Decimal odds represent the total return (your bet plus profit) for every 1 Point bet. You bet your 200-Point endowment on a selected game.</p>
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; border-radius: 6px;">
+                        Formula: <code>Bet * Odds</code><br>
+                        Example: <strong>4.0</strong> odds. Payout: <code>200 * 4.0 = 800 Points</code>.<br>
+                        Example: <strong>1.5</strong> odds. Payout: <code>200 * 1.5 = 300 Points</code>.
+                    </div>
+                </div>
+            `;
+        {{ endif }}
+        
+        document.getElementById('modalBody').innerHTML = content;
+        modal.style.display = 'block';
+    }
+
+    function setBettingMode(mode) {
+        if (isSimulating || isCompleted) return;
+
+        bettingMode = mode;
+
+        const btnSwitching = document.getElementById('btn-use-switching-point');
+        const btnSingle = document.getElementById('btn-bet-per-single');
+        const noticeBox = document.getElementById('switching-point-emphasis-notice');
+
+        if (mode === 'switching') {
+            if (btnSwitching) btnSwitching.classList.add('active');
+            if (btnSingle) btnSingle.classList.remove('active');
+            if (noticeBox) noticeBox.style.display = 'block';
+            document.getElementById('use_switching_point').value = "true";
+            clearSelections();
+        } else {
+            if (btnSwitching) btnSwitching.classList.remove('active');
+            if (btnSingle) btnSingle.classList.add('active');
+            if (noticeBox) noticeBox.style.display = 'none';
+            document.getElementById('use_switching_point').value = "false";
+            
+            // For manual single mode, switching_point is 0 to bypass validation
+            document.getElementById('switching_point').value = "0";
+            for (let i = 1; i <= 10; i++) {
+                const row = document.getElementById('row-' + i);
+                row.classList.remove('switch-line');
+            }
+        }
+    }
+
+    function clearSelections() {
+        document.getElementById('switching_point').value = "";
+        for (let i = 1; i <= 10; i++) {
+            const row = document.getElementById('row-' + i);
+            const wBtn = row.querySelector('.white-btn');
+            const bBtn = row.querySelector('.black-btn');
+            const hidden = document.getElementById('choice' + i + '_white');
+
+            wBtn.classList.remove('selected-white');
+            bBtn.classList.remove('selected-black');
+            row.classList.remove('switch-line');
+            hidden.value = "";
+        }
+    }
+
+    let isSimulating = false;
+    let isCompleted = false;
+
+    function checkAndSubmit() {
+        if (isSimulating) return;
+
+        if (isCompleted) {
+            document.querySelector('form').submit();
+            return;
+        }
+
+        // Clear previous highlights
+        for (let i = 1; i <= 10; i++) {
+            const row = document.getElementById('row-' + i);
+            row.classList.remove('unselected-row-highlight');
+        }
+
+        let swPoint = document.getElementById('switching_point').value;
+        let unselectedIndices = [];
+
+        if (bettingMode === 'switching') {
+            if (!swPoint || swPoint === "0") {
+                for (let i = 1; i <= 10; i++) {
+                    unselectedIndices.push(i);
+                }
+            }
+        } else {
+            for (let i = 1; i <= 10; i++) {
+                const choiceVal = document.getElementById('choice' + i + '_white').value;
+                if (choiceVal === "") {
+                    unselectedIndices.push(i);
+                }
+            }
+            swPoint = "0";
+            document.getElementById('switching_point').value = "0";
+        }
+
+        if (unselectedIndices.length > 0) {
+            unselectedIndices.forEach(idx => {
+                const row = document.getElementById('row-' + idx);
+                row.classList.add('unselected-row-highlight');
+            });
+            
+            const errMsg = document.getElementById('error-message-bets');
+            if (bettingMode === 'switching') {
+                errMsg.innerText = "Please select a row in the table first to indicate your switching point.";
+            } else {
+                errMsg.innerText = "Please choose your bet in the highlighted games: " + unselectedIndices.join(', ') + ".";
+            }
+            errMsg.style.display = 'block';
+            
+            // Scroll to the first unselected row
+            const firstUnselectedRow = document.getElementById('row-' + unselectedIndices[0]);
+            const y = firstUnselectedRow.getBoundingClientRect().top + window.pageYOffset - 120;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            return;
+        } else {
+            document.getElementById('error-message-bets').style.display = 'none';
+        }
+
+        // Lock table interaction immediately
+        document.querySelector('.hl-table tbody').style.pointerEvents = 'none';
+        const submitBtn = document.getElementById('submit-btn-bottom');
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-secondary');
+        submitBtn.innerText = "Saving Bets...";
+
+        // Send to backend via oTree live channel
+        liveSend({
+            type: 'save_bets',
+            switching_point: swPoint,
+            use_switching_point: bettingMode === 'switching',
+            choices: {
+                '1': document.getElementById('choice1_white').value === "1",
+                '2': document.getElementById('choice2_white').value === "1",
+                '3': document.getElementById('choice3_white').value === "1",
+                '4': document.getElementById('choice4_white').value === "1",
+                '5': document.getElementById('choice5_white').value === "1",
+                '6': document.getElementById('choice6_white').value === "1",
+                '7': document.getElementById('choice7_white').value === "1",
+                '8': document.getElementById('choice8_white').value === "1",
+                '9': document.getElementById('choice9_white').value === "1",
+                '10': document.getElementById('choice10_white').value === "1"
+            }
+        });
+    }
+
+    function liveRecv(data) {
+        if (data.status === 'saved') {
+            startSimulation();
+        }
+    }
+
+    function startSimulation() {
+        // Smooth scroll to just a tiny bit above the table headers
+        const table = document.querySelector('.hl-table');
+        const yOffset = -50; // Scroll 50px above the table
+        const y = table.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+        
+        isSimulating = true;
+        
+        // Hide all selection stripes during simulation to prevent overlay clash
+        document.querySelectorAll('.selection-stripe').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+        });
+
+        // Disable choice buttons styling by applying pointer events
+        document.querySelector('.hl-table tbody').style.pointerEvents = 'none';
+        
+        // Update placing bet button
+        const submitBtn = document.getElementById('submit-btn-bottom');
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-secondary');
+        submitBtn.innerText = "Simulating Matches...";
+
+        let currentRowIdx = 1;
+        let roundTotalEarnings = 0;
+        let totalForegonePoints = 0;
+        let numWhiteBets = 0;
+        let numWhiteWins = 0;
+        let numBlackBets = 0;
+        let numBlackWins = 0;
+
+        // Pre-calculate number of bets
+        for (let idx = 1; idx <= 10; idx++) {
+            if (document.getElementById('choice' + idx + '_white').value === "1") {
+                numWhiteBets++;
+            } else {
+                numBlackBets++;
+            }
+        }
+
+        function simulateRow() {
+            if (currentRowIdx <= 10) {
+                const row = document.getElementById('row-' + currentRowIdx);
+                
+                // Read data attributes
+                const outcome = row.getAttribute('data-outcome');
+                const details = row.getAttribute('data-details');
+                const totalMoves = parseInt(row.getAttribute('data-moves')) || 40;
+                const pw = parseFloat(row.getAttribute('data-pw')) || 0.5;
+                const payoutWhite = parseInt(row.getAttribute('data-payout-white')) || 0;
+                const payoutBlack = parseInt(row.getAttribute('data-payout-black')) || 0;
+
+                // Find user's choice for this row
+                const userChoiceWhite = document.getElementById('choice' + currentRowIdx + '_white').value === "1";
+
+                // Get prediction bar elements
+                const wPredBar = row.querySelector('.white-pred-bar');
+                const bPredBar = row.querySelector('.black-pred-bar');
+                
+                // Set initial probabilities
+                let currentWProb = pw * 100;
+                wPredBar.style.width = currentWProb + '%';
+                bPredBar.style.width = (100 - currentWProb) + '%';
+
+                // Elements in cells
+                const cellWon = row.querySelector('.cell-won');
+                const cellDetails = row.querySelector('.cell-details');
+                const cellPayout = row.querySelector('.cell-payout');
+
+                const wonDash = cellWon.querySelector('.placeholder-dash');
+                const detailsDash = cellDetails.querySelector('.placeholder-dash');
+                const payoutDash = cellPayout.querySelector('.placeholder-dash');
+
+                const tickerMoves = cellDetails.querySelector('.ticker-moves');
+                const finalDetails = cellDetails.querySelector('.final-details');
+
+                // Hide dashes for details first, show ticker
+                detailsDash.style.display = 'none';
+                tickerMoves.style.display = 'inline';
+
+                let currentMoves = 0;
+                
+                const tickerTimer = setInterval(() => {
+                    if (currentMoves < totalMoves) {
+                        currentMoves += 1;
+                        tickerMoves.innerText = currentMoves + " moves";
+
+                        // Update prediction bars every 5 moves (not too fast)
+                        if (currentMoves % 5 === 0) {
+                            let delta = (Math.random() - 0.5) * 8; // small changes
+                            currentWProb = Math.max(15, Math.min(85, currentWProb + delta));
+                            wPredBar.style.width = currentWProb + '%';
+                            bPredBar.style.width = (100 - currentWProb) + '%';
+                        }
+                    }
+                    
+                    if (currentMoves === totalMoves) {
+                        clearInterval(tickerTimer);
+
+                        // Set final win probability (winner = 100%, loser = 0%)
+                        if (outcome === 'white') {
+                            wPredBar.style.width = '100%';
+                            bPredBar.style.width = '0%';
+                        } else {
+                            wPredBar.style.width = '0%';
+                            bPredBar.style.width = '100%';
+                        }
+                        
+                        // Ticker completes, show details
+                        tickerMoves.style.display = 'none';
+                        finalDetails.innerText = details;
+                        finalDetails.style.display = 'inline';
+
+                        // Reveal Who Won badge
+                        wonDash.style.display = 'none';
+                        if (outcome === 'white') {
+                            cellWon.querySelector('.winner-pill.white-player').style.display = 'inline-block';
+                        } else if (outcome === 'black') {
+                            cellWon.querySelector('.winner-pill.black-player').style.display = 'inline-block';
+                        } else {
+                            cellWon.querySelector('.winner-pill.draw-player').style.display = 'inline-block';
+                        }
+
+                        // Determine payout points
+                        const finalPayout = userChoiceWhite ? payoutWhite : payoutBlack;
+                        roundTotalEarnings += finalPayout;
+                        
+                        const winningPayout = outcome === 'white' ? payoutWhite : payoutBlack;
+                        const foregonePayout = (finalPayout > 0) ? 0 : winningPayout;
+                        totalForegonePoints += foregonePayout;
+
+                        if (finalPayout > 0) {
+                            if (userChoiceWhite) {
+                                numWhiteWins++;
+                            } else {
+                                numBlackWins++;
+                            }
+                        }
+                        
+                        payoutDash.style.display = 'none';
+                        
+                        if (finalPayout > 0) {
+                            const winPill = cellPayout.querySelector('.payout-pill.win-pill');
+                            winPill.innerText = "+" + finalPayout + " Pts";
+                            winPill.style.display = 'inline-block';
+                            triggerConfettiBurst(winPill);
+                        } else {
+                            const losePill = cellPayout.querySelector('.payout-pill.lose-pill');
+                            losePill.innerText = "0 Pts";
+                            losePill.style.display = 'inline-block';
+                            
+                            // Clean up previous foregone text if any (e.g. on page reload)
+                            const existingForegone = cellPayout.querySelector('.foregone-text');
+                            if (existingForegone) existingForegone.remove();
+
+                            if (isPractice && foregonePayout > 0) {
+                                const foregoneEl = document.createElement('div');
+                                foregoneEl.className = 'foregone-text';
+                                foregoneEl.style.fontSize = '0.8em';
+                                foregoneEl.style.color = '#856404';
+                                foregoneEl.style.marginTop = '4px';
+                                foregoneEl.style.fontWeight = 'bold';
+                                foregoneEl.innerText = "Foregone: +" + foregonePayout + " Pts";
+                                cellPayout.appendChild(foregoneEl);
+                            }
+                        }
+
+                        // Move to next row
+                        currentRowIdx++;
+                        setTimeout(simulateRow, 150); // Small pause before simulating the next row
+                    }
+                }, 15); // 15ms per move, 1 move increment per step = 15ms interval
+            } else {
+                // Simulation complete
+                isSimulating = false;
+                isCompleted = true;
+
+                // Configure summary card based on practice vs real round
+                const summaryHeader = document.querySelector('#results-summary-card h3');
+                if (isPractice) {
+                    summaryHeader.innerText = "Match Simulation Complete";
+                    document.getElementById('practice-round-notice').style.display = 'block';
+                } else {
+                    summaryHeader.innerText = "All 10 games are over";
+                    document.getElementById('real-round-notice').style.display = 'block';
+                }
+
+                // Show total points and performance metrics
+                document.getElementById('summary-payout-points').innerText = "+" + roundTotalEarnings;
+                const foregoneCont = document.getElementById('summary-foregone-container');
+                if (isPractice) {
+                    document.getElementById('summary-foregone-points').innerText = "+" + totalForegonePoints;
+                    foregoneCont.style.display = 'block';
+                } else {
+                    foregoneCont.style.display = 'none';
+                }
+                document.getElementById('summary-white-bets').innerText = numWhiteBets;
+                document.getElementById('summary-white-wins').innerText = numWhiteWins + " Win" + (numWhiteWins !== 1 ? "s" : "");
+                document.getElementById('summary-black-bets').innerText = numBlackBets;
+                document.getElementById('summary-black-wins').innerText = numBlackWins + " Win" + (numBlackWins !== 1 ? "s" : "");
+
+                // Show summary card
+                const summaryCard = document.getElementById('results-summary-card');
+                summaryCard.style.display = 'block';
+                summaryCard.offsetHeight;
+                summaryCard.style.opacity = '1';
+
+                // Update the action button
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-secondary');
+                submitBtn.classList.add('btn-success');
+                
+                if (isPractice) {
+                    submitBtn.innerText = "Continue to Real Rounds";
+                } else {
+                    submitBtn.innerText = "Next Match";
+                }
+            }
+        }
+
+        // Start sequential simulation
+        simulateRow();
+    }
+
+    function setSwitch(rowIdx, clickedWhite) {
+        if (isSimulating || isCompleted) return;
+
+        // Clear unselected highlights for this row
+        const rowEl = document.getElementById('row-' + rowIdx);
+        rowEl.classList.remove('unselected-row-highlight');
+
+        // Check if all are decided to hide overall error alert
+        let allDecided = true;
+        for (let i = 1; i <= 10; i++) {
+            if (i !== rowIdx && document.getElementById('choice' + i + '_white').value === "") {
+                allDecided = false;
+                break;
+            }
+        }
+        if (allDecided) {
+            document.getElementById('error-message-bets').style.display = 'none';
+        }
+
+        if (bettingMode === 'single') {
+            const row = document.getElementById('row-' + rowIdx);
+            const wBtn = row.querySelector('.white-btn');
+            const bBtn = row.querySelector('.black-btn');
+            const hidden = document.getElementById('choice' + rowIdx + '_white');
+
+            wBtn.classList.remove('selected-white');
+            bBtn.classList.remove('selected-black');
+
+            if (clickedWhite) {
+                wBtn.classList.add('selected-white');
+                hidden.value = "1";
+            } else {
+                bBtn.classList.add('selected-black');
+                hidden.value = "0";
+            }
+            return;
+        }
+
+        let switchPoint;
+        if (wbTop) {
+            switchPoint = clickedWhite ? rowIdx : rowIdx + 1;
+        } else {
+            switchPoint = !clickedWhite ? rowIdx : rowIdx + 1;
+        }
+        
+        document.getElementById('switching_point').value = switchPoint;
+
+        for (let i = 1; i <= 10; i++) {
+            const row = document.getElementById('row-' + i);
+            const wBtn = row.querySelector('.white-btn');
+            const bBtn = row.querySelector('.black-btn');
+            const hidden = document.getElementById('choice' + i + '_white');
+
+            wBtn.classList.remove('selected-white'); 
+            bBtn.classList.remove('selected-black'); 
+            row.classList.remove('switch-line');
+
+            if (wbTop) {
+                if (i < switchPoint) { 
+                    bBtn.classList.add('selected-black'); 
+                    hidden.value = "0"; 
+                } else { 
+                    wBtn.classList.add('selected-white'); 
+                    hidden.value = "1"; 
+                }
+            } else {
+                if (i < switchPoint) { 
+                    wBtn.classList.add('selected-white'); 
+                    hidden.value = "1"; 
+                } else { 
+                    bBtn.classList.add('selected-black'); 
+                    hidden.value = "0"; 
+                }
+            }
+
+            if (i === switchPoint - 1) row.classList.add('switch-line');
+        }
+    }
+
+    function triggerConfettiBurst(element) {
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + window.scrollX + rect.width / 2;
+        const centerY = rect.top + window.scrollY + rect.height / 2;
+        
+        const colors = ['#ffc107', '#28a745', '#007bff', '#e83e8c', '#fd7e14'];
+        
+        for (let i = 0; i < 16; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'confetti-particle';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 25 + Math.random() * 35;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--x', `${x}px`);
+            particle.style.setProperty('--y', `${y}px`);
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            particle.style.left = `${centerX}px`;
+            particle.style.top = `${centerY}px`;
+            particle.style.position = 'absolute';
+            
+            const size = 6 + Math.random() * 6;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            if (Math.random() > 0.5) {
+                particle.style.borderRadius = '50%';
+            }
+            
+            particle.style.animation = `burst-particle 0.6s ease-out forwards`;
+            
+            document.body.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 600);
+        }
+    }
+
+    function showHistoryRound(roundNum) {
+        // Find history data
+        const hist = roundHistory.find(h => h.round_number === roundNum);
+        if (!hist) return;
+
+        // Update history Elo comparison widget
+        document.getElementById('hist-white-elo-val').innerText = hist.white_elo;
+        document.getElementById('hist-black-elo-val').innerText = hist.black_elo;
+        updateEloCard('hist', hist.white_elo, hist.black_elo);
+
+        // Hide active round view
+        document.getElementById('active-round-container').style.display = 'none';
+        
+        // Show history container
+        const histContainer = document.getElementById('history-round-container');
+        histContainer.style.display = 'block';
+
+        // Update active tab styling
+        const tabs = document.querySelectorAll('#round-tabs button');
+        tabs.forEach(btn => {
+            if (btn.innerText.includes(`Round ${roundNum}`) || (hist.is_practice && btn.innerText.includes('Practice'))) {
+                btn.classList.add('active');
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.remove('active');
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+
+        // Set up the history table header ratings & layouts
+        const whiteHeaderHtml = `Bet on White<br><small>Elo ${hist.white_elo}</small>`;
+        const blackHeaderHtml = `Bet on Black / Tie<br><small>Elo ${hist.black_elo}</small>`;
+
+        const trHeader = document.querySelector('#history-table thead tr');
+        if (hist.white_on_left) {
+            trHeader.innerHTML = `
+                <th class="th-game">Game</th>
+                <th class="th-white">${whiteHeaderHtml}</th>
+                <th class="th-black">${blackHeaderHtml}</th>
+                <th class="th-won">Who Won</th>
+                <th class="th-details">Game Details</th>
+                <th class="th-payout">Payout</th>
+            `;
+        } else {
+            trHeader.innerHTML = `
+                <th class="th-game">Game</th>
+                <th class="th-black">${blackHeaderHtml}</th>
+                <th class="th-white">${whiteHeaderHtml}</th>
+                <th class="th-won">Who Won</th>
+                <th class="th-details">Game Details</th>
+                <th class="th-payout">Payout</th>
+            `;
+        }
+
+        // Populate history rows
+        const histTbody = document.querySelector('#history-table tbody');
+        histTbody.innerHTML = '';
+
+        let roundTotalEarnings = hist.payoff;
+        let numWhiteBets = hist.num_white_bets;
+        let numWhiteWins = hist.num_white_wins;
+        let numBlackBets = hist.num_black_bets;
+        let numBlackWins = hist.num_black_wins;
+        let totalForegonePoints = 0;
+
+        hist.rows.forEach(r => {
+            // Determine winner pill styles
+            let winnerPillHtml = '';
+            if (r.outcome === 'white') {
+                winnerPillHtml = '<div class="winner-pill white-player">White</div>';
+            } else if (r.outcome === 'black') {
+                winnerPillHtml = '<div class="winner-pill black-player">Black</div>';
+            } else {
+                winnerPillHtml = '<div class="winner-pill draw-player">Draw</div>';
+            }
+
+            // Determine payout and foregone payoff
+            const choiceIsWhite = r.choice_is_white;
+            const actualPayout = choiceIsWhite ? r.payout_if_white : r.payout_if_black;
+            const winningPayout = r.outcome === 'white' ? r.payout_if_white : r.payout_if_black;
+            
+            let payoutHtml = '';
+            if (actualPayout > 0) {
+                payoutHtml = `<div class="payout-pill win-pill">+${actualPayout} Pts</div>`;
+            } else {
+                payoutHtml = `<div class="payout-pill lose-pill">0 Pts</div>`;
+                const foregone = winningPayout;
+                totalForegonePoints += foregone;
+                if (hist.is_practice && foregone > 0) {
+                    payoutHtml += `<div class="foregone-text" style="font-size: 0.8em; color: #856404; margin-top: 4px; font-weight: bold;">Foregone: +${foregone} Pts</div>`;
+                }
+            }
+
+            // Bet button styles (highlight selected with stripes)
+            const isWhiteSelected = choiceIsWhite;
+            const isBlackSelected = !choiceIsWhite;
+
+            const wBtnClass = isWhiteSelected ? 'choice-btn white-btn selected-white' : 'choice-btn white-btn';
+            const bBtnClass = isBlackSelected ? 'choice-btn black-btn selected-black' : 'choice-btn black-btn';
+
+            // Selected stripe display style
+            const wStripeStyle = isWhiteSelected ? 'display: block; background-color: #d8b28a;' : 'display: none;';
+            const bStripeStyle = isBlackSelected ? 'display: block; background-color: #555555;' : 'display: none;';
+
+            // Check columns order
+            let colsHtml = '';
+            if (hist.white_on_left) {
+                colsHtml = `
+                    <td style="padding: 8px 10px; width: 25%;">
+                        <div class="${wBtnClass}" style="position: relative; overflow: hidden; pointer-events: none;">
+                            <span style="position: relative; z-index: 3;">${r.val_w}</span>
+                            <div class="selection-stripe white-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; ${wStripeStyle} z-index: 1;"></div>
+                        </div>
+                    </td>
+                    <td style="padding: 8px 10px; width: 25%;">
+                        <div class="${bBtnClass}" style="position: relative; overflow: hidden; pointer-events: none;">
+                            <span style="position: relative; z-index: 3;">${r.val_b}</span>
+                            <div class="selection-stripe black-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; ${bStripeStyle} z-index: 1;"></div>
+                        </div>
+                    </td>
+                `;
+            } else {
+                colsHtml = `
+                    <td style="padding: 8px 10px; width: 25%;">
+                        <div class="${bBtnClass}" style="position: relative; overflow: hidden; pointer-events: none;">
+                            <span style="position: relative; z-index: 3;">${r.val_b}</span>
+                            <div class="selection-stripe black-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; ${bStripeStyle} z-index: 1;"></div>
+                        </div>
+                    </td>
+                    <td style="padding: 8px 10px; width: 25%;">
+                        <div class="${wBtnClass}" style="position: relative; overflow: hidden; pointer-events: none;">
+                            <span style="position: relative; z-index: 3;">${r.val_w}</span>
+                            <div class="selection-stripe white-sel-stripe" style="position: absolute; left: 0; bottom: 0; height: 35%; width: 100%; ${wStripeStyle} z-index: 1;"></div>
+                        </div>
+                    </td>
+                `;
+            }
+
+            const trClass = (hist.use_switching_point && r.index === hist.switching_point - 1) ? 'switch-line' : '';
+
+            const rowHtml = `
+                <tr id="hist-row-${r.index}" class="${trClass}">
+                    <td style="padding: 12px 4px; width: 70px;">
+                        <div class="game-num-pill">${r.index}</div>
+                    </td>
+                    ${colsHtml}
+                    <td style="padding: 12px 4px; width: 110px;">
+                        ${winnerPillHtml}
+                    </td>
+                    <td style="padding: 12px 4px; width: 180px; font-style: italic; color: #6c757d; font-size: 0.9em;">
+                        ${r.details}
+                    </td>
+                    <td style="padding: 12px 4px; width: 100px;">
+                        ${payoutHtml}
+                    </td>
+                </tr>
+            `;
+            histTbody.insertAdjacentHTML('beforeend', rowHtml);
+        });
+
+        // Set up the history summary card
+        const histNoticePractice = document.getElementById('hist-practice-round-notice');
+        const histNoticeReal = document.getElementById('hist-real-round-notice');
+        if (hist.is_practice) {
+            histNoticePractice.style.display = 'block';
+            histNoticeReal.style.display = 'none';
+            document.getElementById('hist-summary-title').innerText = 'Match Simulation Complete';
+        } else {
+            histNoticePractice.style.display = 'none';
+            histNoticeReal.style.display = 'block';
+            document.getElementById('hist-real-round-num').innerText = hist.round_number - 1;
+            document.getElementById('hist-summary-title').innerText = 'All 10 games are over';
+        }
+
+        document.getElementById('hist-white-elo-2').innerText = `(Elo ${hist.white_elo})`;
+        document.getElementById('hist-black-elo-2').innerText = `(Elo ${hist.black_elo})`;
+
+        document.getElementById('hist-summary-white-bets').innerText = numWhiteBets;
+        document.getElementById('hist-summary-white-wins').innerText = `${numWhiteWins} Win${numWhiteWins !== 1 ? 's' : ''}`;
+        document.getElementById('hist-summary-black-bets').innerText = numBlackBets;
+        document.getElementById('hist-summary-black-wins').innerText = `${numBlackWins} Win${numBlackWins !== 1 ? 's' : ''}`;
+        document.getElementById('hist-summary-payout-points').innerText = `+${roundTotalEarnings}`;
+        
+        // Foregone Points in history summary
+        const histForegoneCont = document.getElementById('hist-summary-foregone-container');
+        if (hist.is_practice) {
+            document.getElementById('hist-summary-foregone-points').innerText = `+${totalForegonePoints}`;
+            histForegoneCont.style.display = 'block';
+        } else {
+            histForegoneCont.style.display = 'none';
+        }
+
+        // Show history container elements
+        document.getElementById('hist-results-summary-card').style.display = 'block';
+        document.getElementById('hist-results-summary-card').style.opacity = '1';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showActiveRound() {
+        document.getElementById('history-round-container').style.display = 'none';
+        document.getElementById('active-round-container').style.display = 'block';
+
+        // Set active class on current round tab
+        const tabs = document.querySelectorAll('#round-tabs button');
+        tabs.forEach(btn => {
+            if (btn.id === 'tab-current') {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-primary');
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+{{ endblock }}

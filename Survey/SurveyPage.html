@@ -1,0 +1,80 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    Welcome to the Chess Betting Experiment
+{{ endblock }}
+
+{{ block content }}
+<style>
+    body, .otree-body {
+        background-color: #efe6d5 !important; /* Premium soft light brown */
+    }
+
+    .survey-card {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #efe6d5 !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(93, 80, 55, 0.08);
+        color: #5d5037 !important;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #5d5037;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .form-control {
+        background-color: #ffffff !important;
+        border: 1px solid #dfd0ab !important;
+        border-radius: 8px;
+        padding: 12px;
+        color: #5d5037 !important;
+        font-size: 1.05em;
+        margin-bottom: 20px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #8c7e6c !important;
+        box-shadow: 0 0 0 0.2rem rgba(140, 126, 108, 0.25) !important;
+        outline: none;
+    }
+
+    .btn-primary {
+        background-color: #8c7e6c !important;
+        border-color: #8c7e6c !important;
+        color: #ffffff !important;
+        font-weight: bold;
+        padding: 12px 30px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(93, 80, 55, 0.1);
+    }
+
+    .btn-primary:hover {
+        background-color: #5d4037 !important;
+        border-color: #5d4037 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(93, 80, 55, 0.15);
+    }
+</style>
+
+<div class="survey-card">
+    <h3 class="mb-4 text-center font-weight-bold" style="color: #5d5037;">Participant Registration</h3>
+    <p class="mb-4 text-center text-muted">Please enter your name below to begin the study.</p>
+    
+    <div class="mb-3">
+        <label class="form-label" for="id_participant_name">Please enter your full name:</label>
+        <input type="text" name="participant_name" id="id_participant_name" class="form-control" placeholder="John Doe" required>
+    </div>
+    
+    <div class="d-flex justify-content-center mt-4">
+        <button class="btn btn-primary btn-lg">Start Experiment</button>
+    </div>
+</div>
+{{ endblock }}

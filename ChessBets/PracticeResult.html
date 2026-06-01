@@ -1,0 +1,325 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    {{ if player.is_practice }}Practice Round Results{{ else }}Round Results{{ endif }}
+{{ endblock }}
+
+{{ block content }}
+
+<style>
+    .hl-table {
+        width: 100%;
+        max-width: 960px;
+        margin: 20px auto;
+        border-collapse: collapse;
+    }
+    .hl-table th {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    
+    /* Sticky header column styles matching ELO boxes */
+    .th-white {
+        background-color: #ffffff !important;
+        color: #333 !important;
+        border: 2px solid #dee2e6 !important;
+        border-bottom: 3px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 25%;
+    }
+    .th-black {
+        background-color: #343a40 !important;
+        color: #ffffff !important;
+        border: 2px solid #000 !important;
+        border-bottom: 3px solid #000 !important;
+        font-weight: bold;
+        width: 25%;
+    }
+    .th-game {
+        background-color: #f1f3f5 !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 70px;
+    }
+    .th-win {
+        background-color: #f1f3f5 !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 110px;
+    }
+    .th-details {
+        background-color: #f1f3f5 !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 180px;
+    }
+    .th-payout {
+        background-color: #f1f3f5 !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        font-weight: bold;
+        width: 100px;
+    }
+    
+    /* Rows only have horizontal borders */
+    .hl-table tr {
+        border-bottom: 1px solid #e9ecef;
+    }
+    .hl-table td {
+        border: none;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    /* Game Number Pill */
+    .game-num-pill {
+        display: inline-block;
+        background-color: #f1f3f5;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 6px 16px;
+        font-weight: bold;
+        color: #495057;
+        font-size: 0.95em;
+        min-width: 45px;
+    }
+    
+    /* Static Choice Buttons */
+    .choice-btn-static {
+        display: block;
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+        color: #adb5bd;
+        font-weight: 500;
+        box-sizing: border-box;
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Static Selected States */
+    .selected-white-static {
+        background-color: #ffffff !important;
+        color: #5d5037 !important;
+        border-color: #8c7e6c !important;
+        font-weight: bold !important;
+        box-shadow: inset 0 0 0 1.5px #8c7e6c !important;
+    }
+    .selected-black-static {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #212529 !important;
+        font-weight: bold !important;
+    }
+    
+    /* Winner Pill Badges */
+    .winner-pill {
+        display: inline-block;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: bold;
+        font-size: 0.9em;
+        text-align: center;
+        min-width: 90px;
+    }
+    .winner-pill.white-player {
+        background-color: #ffffff;
+        color: #333;
+        border: 1px solid #dee2e6;
+    }
+    .winner-pill.black-player {
+        background-color: #343a40;
+        color: #ffffff;
+        border: 1px solid #000;
+    }
+    .winner-pill.draw-player {
+        background-color: #6c757d;
+        color: #ffffff;
+        border: 1px solid #6c757d;
+    }
+    
+    /* Payout Pill Badges */
+    .payout-pill {
+        display: inline-block;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: bold;
+        font-size: 0.95em;
+        text-align: center;
+        min-width: 80px;
+    }
+    .win-pill {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .lose-pill {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .detail-text {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .switch-line td {
+        border-bottom: 3px solid #8c7e6c !important;
+    }
+    
+    /* Animation hidden rows */
+    .result-row {
+        display: none;
+        opacity: 0;
+        transform: translateY(5px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .fade-in-row {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+    
+    .instruction-box {
+        max-width: 960px;
+        margin: 20px auto;
+    }
+</style>
+
+{{ if player.is_practice }}
+<div class="alert alert-info instruction-box">
+    This was a <b>PRACTICE ROUND</b>. These earnings will <b>NOT</b> be added to your final payout.
+</div>
+{{ else }}
+<div class="alert alert-success instruction-box">
+    This was a <b>REAL ROUND</b> (Round {{ real_round_number }} of 11). One of your choices in this round could be selected as binding for your final payment.
+</div>
+{{ endif }}
+
+<table class="hl-table">
+    <thead>
+        <tr>
+            <th class="th-game">Game</th>
+            <th class="th-win">Who Won</th>
+            <th class="th-details">Game Details</th>
+            <th class="th-payout">Payout</th>
+            {{ if player.white_on_left }}
+                <th class="th-white">Bet on White<br><small>(Elo {{ player.white_elo }})</small></th>
+                <th class="th-black">Bet on Black / Tie<br><small>(Elo {{ player.black_elo }})</small></th>
+            {{ else }}
+                <th class="th-black">Bet on Black / Tie<br><small>(Elo {{ player.black_elo }})</small></th>
+                <th class="th-white">Bet on White<br><small>(Elo {{ player.white_elo }})</small></th>
+            {{ endif }}
+        </tr>
+    </thead>
+    <tbody>
+        {{ for r in results_rows }}
+        <tr id="row-{{ r.index }}" class="result-row {{ if r.is_binding }}switch-line{{ endif }}" data-moves="{{ r.moves }}">
+            <td style="padding: 12px 4px; width: 70px;">
+                <div class="game-num-pill">{{ r.index }}</div>
+            </td>
+            <td style="padding: 12px 4px; width: 110px;">
+                {{ if r.outcome == 'white' }}
+                    <div class="winner-pill white-player">White</div>
+                {{ elif r.outcome == 'black' }}
+                    <div class="winner-pill black-player">Black</div>
+                {{ else }}
+                    <div class="winner-pill draw-player">Draw</div>
+                {{ endif }}
+            </td>
+            <td style="padding: 12px 4px; width: 180px;" class="detail-text">
+                {{ r.details }}
+            </td>
+            <td style="padding: 12px 4px; width: 100px;">
+                {{ if r.is_win }}
+                    <div class="payout-pill win-pill">+{{ r.points }} Pts</div>
+                {{ else }}
+                    <div class="payout-pill lose-pill">0 Pts</div>
+                {{ endif }}
+            </td>
+            {{ if player.white_on_left }}
+                <td style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn-static {{ if r.choice_is_white }}selected-white-static{{ endif }}">Payout: {{ r.val_w }}</div>
+                </td>
+                <td style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn-static {{ if not r.choice_is_white }}selected-black-static{{ endif }}">Payout: {{ r.val_b }}</div>
+                </td>
+            {{ else }}
+                <td style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn-static {{ if not r.choice_is_white }}selected-black-static{{ endif }}">Payout: {{ r.val_b }}</div>
+                </td>
+                <td style="padding: 8px 10px; width: 25%;">
+                    <div class="choice-btn-static {{ if r.choice_is_white }}selected-white-static{{ endif }}">Payout: {{ r.val_w }}</div>
+                </td>
+            {{ endif }}
+        </tr>
+        {{ endfor }}
+    </tbody>
+</table>
+
+<div class="mt-4 d-flex justify-content-end instruction-box">
+    <button class="btn btn-primary btn-lg px-5" id="next-btn">
+        {{ if player.is_practice }}Continue to Real Rounds{{ else }}Next Match{{ endif }}
+    </button>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const rows = document.querySelectorAll(".result-row");
+        const nextBtn = document.getElementById("next-btn");
+        
+        // Initially disable button
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = "0.5";
+            nextBtn.style.cursor = "not-allowed";
+        }
+
+        let rowIndex = 0;
+
+        function showNextRow() {
+            if (rowIndex < rows.length) {
+                const row = rows[rowIndex];
+                
+                // Show the row in table structure
+                row.style.display = "table-row";
+                
+                // Trigger transition reflow
+                row.offsetHeight; 
+                row.classList.add("fade-in-row");
+                
+                // Read moves and calculate delay (1ms per move)
+                const moves = parseInt(row.getAttribute("data-moves")) || 40;
+                const delay = moves * 1; 
+
+                rowIndex++;
+                setTimeout(showNextRow, delay);
+            } else {
+                // All rows shown, enable button
+                if (nextBtn) {
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = "1";
+                    nextBtn.style.cursor = "pointer";
+                }
+            }
+        }
+
+        // Start animation rollout
+        showNextRow();
+    });
+</script>
+
+{{ endblock }}
